@@ -18,12 +18,16 @@ package org.microbean.qualifier;
 
 import java.lang.constant.ClassDesc;
 
-final class ConstantDescs {
+public final class ConstantDescs {
 
-  static final ClassDesc CD_Qualifiers = ClassDesc.of(Qualifiers.class.getName());
+  public static final ClassDesc CD_Constable = ClassDesc.of("java.lang.constant.Constable");
   
+  public static final ClassDesc CD_Qualified = ClassDesc.of(Qualified.class.getName());
+
+  public static final ClassDesc CD_Qualifiers = ClassDesc.of(Qualifiers.class.getName());
+
   private ConstantDescs() {
     super();
   }
-  
+
 }
