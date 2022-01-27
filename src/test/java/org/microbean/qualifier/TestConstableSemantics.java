@@ -33,7 +33,7 @@ final class TestConstableSemantics {
 
   @Test
   final void testConstableSemantics() throws ReflectiveOperationException {
-    final Qualifiers q = Qualifiers.of("a", "b", "c", "d");
+    final Qualifiers<String> q = Qualifiers.of("a", "b", "c", "d");
     assertEquals(q, q.describeConstable().orElseThrow().resolveConstantDesc(MethodHandles.lookup()));
   }
   

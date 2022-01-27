@@ -34,8 +34,22 @@
 
       <dependency>
         <groupId>org.microbean</groupId>
+        <artifactId>microbean-constant</artifactId>
+        <version>0.0.1</version>
+        <type>jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.microbean</groupId>
         <artifactId>microbean-development-annotations</artifactId>
         <version>0.2.11</version>
+        <type>jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.microbean</groupId>
+        <artifactId>microbean-invoke</artifactId>
+        <version>0.0.1</version>
         <type>jar</type>
       </dependency>
 
@@ -50,10 +64,28 @@
 
 
     <dependency>
-        <groupId>org.microbean</groupId>
-        <artifactId>microbean-development-annotations</artifactId>
-        <type>jar</type>
-        <scope>compile</scope>
+      <groupId>org.microbean</groupId>
+      <artifactId>microbean-constant</artifactId>
+      <type>jar</type>
+      <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.microbean</groupId>
+      <artifactId>microbean-development-annotations</artifactId>
+      <type>jar</type>
+      <scope>compile</scope>
+    </dependency>
+
+
+    <!-- Runtime-scoped dependencies. -->
+
+
+    <dependency>
+      <groupId>org.microbean</groupId>
+      <artifactId>microbean-invoke</artifactId>
+      <type>jar</type>
+      <scope>runtime</scope>
     </dependency>
 
 
