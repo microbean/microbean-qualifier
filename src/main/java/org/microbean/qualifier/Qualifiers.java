@@ -38,8 +38,6 @@ import java.util.TreeMap;
 
 import java.util.function.Predicate;
 
-import org.microbean.development.annotation.Convenience;
-
 import static java.lang.constant.ConstantDescs.BSM_INVOKE;
 import static java.lang.constant.ConstantDescs.NULL;
 
@@ -193,7 +191,6 @@ public final class Qualifiers<V extends Constable> implements Constable {
    *
    * @see Map#isEmpty()
    */
-  @Convenience
   public final boolean isEmpty() {
     return this.qualifiers().isEmpty();
   }
@@ -214,7 +211,6 @@ public final class Qualifiers<V extends Constable> implements Constable {
    *
    * @see Map#size()
    */
-  @Convenience
   public final int size() {
     return this.qualifiers().size();
   }
@@ -238,7 +234,6 @@ public final class Qualifiers<V extends Constable> implements Constable {
    *
    * @see SortedMap#entrySet()
    */
-  @Convenience
   public final Set<Entry<String, V>> entrySet() {
     return this.qualifiers().entrySet();
   }
@@ -260,7 +255,6 @@ public final class Qualifiers<V extends Constable> implements Constable {
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  @Convenience
   public final boolean isSubsetOf(final Qualifiers<?> other) {
     return other == this || other.contains(this);
   }
@@ -564,7 +558,6 @@ public final class Qualifiers<V extends Constable> implements Constable {
    *
    * @see #of(String, Constable)
    */
-  @Convenience
   public static final <V extends Constable> Qualifiers<V> of(final V value0) {
     return of("value", value0);
   }
@@ -626,7 +619,6 @@ public final class Qualifiers<V extends Constable> implements Constable {
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  @Convenience
   public static final <V extends Constable> Qualifiers<V> of(final String name0, final V value0,
                                                              final String name1, final V value1) {
     final SortedMap<String, V> map = new TreeMap<>();
@@ -667,7 +659,6 @@ public final class Qualifiers<V extends Constable> implements Constable {
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  @Convenience
   public static final <V extends Constable> Qualifiers<V> of(final String name0, final V value0,
                                                              final String name1, final V value1,
                                                              final String name2, final V value2) {
