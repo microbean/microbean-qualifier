@@ -56,13 +56,21 @@ import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
  * href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/doc-files/ValueBased.html">value-based
  * class</a>.</p>
  *
+ * <p>Values of type {@code K} must be members of classes adhering to
+ * <a
+ * href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/doc-files/ValueBased.html">value-based
+ * semantics</a>.</p>
+ *
  * <p>Values of type {@code V} must be members of classes adhering to
  * <a
  * href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/doc-files/ValueBased.html">value-based
  * semantics</a>.</p>
  *
  * <p>Undefined behavior will result if the preceding requirements are
- * not honored by callers.</p>
+ * not honored.</p>
+ *
+ * @param <K> the type borne by the keys of the qualifiers in this
+ * {@link Qualifiers}
  *
  * @param <V> the type borne by the values of the qualifiers in this
  * {@link Qualifiers}
@@ -70,9 +78,9 @@ import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  *
- * @see #of(String, Constable)
+ * @see #of(Constable, Constable)
  */
-public final class Qualifiers<V extends Constable> implements Constable {
+public final class Qualifiers<K extends Constable & Comparable<K>, V extends Constable> implements Constable {
 
 
   /*
@@ -80,7 +88,7 @@ public final class Qualifiers<V extends Constable> implements Constable {
    */
 
 
-  private static final Qualifiers<?> EMPTY_QUALIFIERS = new Qualifiers<>();
+  private static final Qualifiers<?, ?> EMPTY_QUALIFIERS = new Qualifiers<>();
 
 
   /*
@@ -88,7 +96,7 @@ public final class Qualifiers<V extends Constable> implements Constable {
    */
 
 
-  private final SortedMap<String, V> qualifiers;
+  private final SortedMap<K, V> qualifiers;
 
 
   /*
@@ -100,7 +108,7 @@ public final class Qualifiers<V extends Constable> implements Constable {
     this(null);
   }
 
-  private Qualifiers(final Map<? extends String, ? extends V> qualifiers) {
+  private Qualifiers(final Map<? extends K, ? extends V> qualifiers) {
     super();
     if (qualifiers == null || qualifiers.isEmpty()) {
       this.qualifiers = emptySortedMap();
@@ -129,7 +137,7 @@ public final class Qualifiers<V extends Constable> implements Constable {
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public final SortedMap<String, V> qualifiers() {
+  public final SortedMap<K, V> qualifiers() {
     return this.qualifiers;
   }
 
@@ -173,7 +181,7 @@ public final class Qualifiers<V extends Constable> implements Constable {
    *
    * @see Set#containsAll(java.util.Collection)
    */
-  public final boolean contains(final Qualifiers<?> other) {
+  public final boolean contains(final Qualifiers<?, ?> other) {
     return this == other || this.size() >= other.size() && this.entrySet().containsAll(other.entrySet());
   }
 
@@ -234,7 +242,7 @@ public final class Qualifiers<V extends Constable> implements Constable {
    *
    * @see SortedMap#entrySet()
    */
-  public final Set<Entry<String, V>> entrySet() {
+  public final Set<Entry<K, V>> entrySet() {
     return this.qualifiers().entrySet();
   }
 
@@ -255,7 +263,7 @@ public final class Qualifiers<V extends Constable> implements Constable {
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public final boolean isSubsetOf(final Qualifiers<?> other) {
+  public final boolean isSubsetOf(final Qualifiers<?, ?> other) {
     return other == this || other.contains(this);
   }
 
@@ -276,7 +284,7 @@ public final class Qualifiers<V extends Constable> implements Constable {
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public final int intersectionSize(final Qualifiers<?> other) {
+  public final int intersectionSize(final Qualifiers<?, ?> other) {
     if (other == this) {
       // Just an identity check to rule this easy case out.
       return this.size();
@@ -314,7 +322,7 @@ public final class Qualifiers<V extends Constable> implements Constable {
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public final int symmetricDifferenceSize(final Qualifiers<?> other) {
+  public final int symmetricDifferenceSize(final Qualifiers<?, ?> other) {
     if (other == this) {
       // Just an identity check to rule this easy case out.
       return 0;
@@ -348,7 +356,7 @@ public final class Qualifiers<V extends Constable> implements Constable {
    */
   @Override // Constable
   public final Optional<? extends ConstantDesc> describeConstable() {
-    final Collection<Entry<String, V>> entrySet = this.entrySet();
+    final Collection<Entry<K, V>> entrySet = this.entrySet();
     if (entrySet.isEmpty()) {
       return
         Optional.of(DynamicConstantDesc.of(BSM_INVOKE,
@@ -366,8 +374,13 @@ public final class Qualifiers<V extends Constable> implements Constable {
                                   MethodTypeDesc.of(CD_Qualifiers,
                                                     CD_Constable.arrayType()));
       int i = 1;
-      for (final Entry<String, V> entry : entrySet) {
-        bsmInvokeArguments[i++] = entry.getKey();
+      for (final Entry<K, V> entry : entrySet) {
+        final Constable key = entry.getKey();
+        final Optional<? extends ConstantDesc> k = key == null ? Optional.empty() : key.describeConstable();
+        if (k.isEmpty()) {
+          return Optional.empty();
+        }
+        bsmInvokeArguments[i++] = k.orElseThrow();
         final Constable value = entry.getValue();
         final Optional<? extends ConstantDesc> v = value == null ? Optional.of(NULL) : value.describeConstable();
         if (v.isEmpty()) {
@@ -480,6 +493,10 @@ public final class Qualifiers<V extends Constable> implements Constable {
    * {@code 0} (and whose {@link #isEmpty()} method returns {@code
    * true}).
    *
+   * @param <K> the type borne by the keys of the qualifiers in the
+   * returned {@link Qualifiers} (somewhat moot since the returned
+   * {@link Qualifiers} will be {@linkplain #isEmpty() empty})
+   *
    * @param <V> the type borne by the values of the qualifiers in the
    * returned {@link Qualifiers} (somewhat moot since the returned
    * {@link Qualifiers} will be {@linkplain #isEmpty() empty})
@@ -496,13 +513,16 @@ public final class Qualifiers<V extends Constable> implements Constable {
    * threads.
    */
   @SuppressWarnings("unchecked")
-  public static final <V extends Constable> Qualifiers<V> of() {
-    return (Qualifiers<V>)EMPTY_QUALIFIERS;
+  public static final <K extends Constable & Comparable<K>, V extends Constable> Qualifiers<K, V> of() {
+    return (Qualifiers<K, V>)EMPTY_QUALIFIERS;
   }
 
   /**
    * Returns a {@link Qualifiers} equal to one consisting of the
    * entries represented by the supplied {@link Map}.
+   *
+   * @param <K> the type borne by the keys of the qualifiers in the
+   * returned {@link Qualifiers}
    *
    * @param <V> the type borne by the values of the qualifiers in the
    * returned {@link Qualifiers}
@@ -521,22 +541,22 @@ public final class Qualifiers<V extends Constable> implements Constable {
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    *
-   * @see #of(String, Constable)
+   * @see #of(Constable, Constable)
    */
-  public static final <V extends Constable> Qualifiers<V> of(final Map<? extends String, ? extends V> map) {
+  public static final <K extends Constable & Comparable<K>, V extends Constable> Qualifiers<K, V> of(final Map<? extends K, ? extends V> map) {
     if (map == null || map.isEmpty()) {
       return of();
     } else {
-      final SortedMap<String, V> newMap = new TreeMap<>();
+      final SortedMap<K, V> newMap = new TreeMap<>();
       map.entrySet().forEach(e -> newMap.put(e.getKey(), e.getValue()));
       return new Qualifiers<>(newMap);
     }
   }
 
   /**
-   * Returns a new {@link Qualifiers} with a single qualifier whose
-   * name is {@code value} and whose value is the supplied {@code
-   * value0} argument.
+   * Returns a new {@link Qualifiers} with a single key equal to
+   * "{@code value}" and whose value is the supplied {@code value0}
+   * argument.
    *
    * @param <V> the type borne by the values of the qualifiers in the
    * returned {@link Qualifiers}
@@ -556,9 +576,9 @@ public final class Qualifiers<V extends Constable> implements Constable {
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    *
-   * @see #of(String, Constable)
+   * @see #of(Constable, Constable)
    */
-  public static final <V extends Constable> Qualifiers<V> of(final V value0) {
+  public static final <V extends Constable> Qualifiers<String, V> of(final V value0) {
     return of("value", value0);
   }
 
@@ -566,6 +586,9 @@ public final class Qualifiers<V extends Constable> implements Constable {
    * Returns a new {@link Qualifiers} with a single qualifier whose
    * name is the supplied {@code name0} argument, and whose value is
    * the supplied {@code value0} argument.
+   *
+   * @param <K> the type borne by the keys of the qualifiers in the
+   * returned {@link Qualifiers}
    *
    * @param <V> the type borne by the values of the qualifiers in the
    * returned {@link Qualifiers}
@@ -588,13 +611,16 @@ public final class Qualifiers<V extends Constable> implements Constable {
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public static final <V extends Constable> Qualifiers<V> of(final String name0, final V value0) {
+  public static final <K extends Constable & Comparable<K>, V extends Constable> Qualifiers<K, V> of(final K name0, final V value0) {
     return new Qualifiers<>(Map.of(name0, value0));
   }
 
   /**
    * Returns a {@link Qualifiers} consisting of the entries
    * represented by the supplied alternating name-value pairs.
+   *
+   * @param <K> the type borne by the keys of the qualifiers in the
+   * returned {@link Qualifiers}
    *
    * @param <V> the type borne by the values of the qualifiers in the
    * returned {@link Qualifiers}
@@ -619,9 +645,9 @@ public final class Qualifiers<V extends Constable> implements Constable {
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public static final <V extends Constable> Qualifiers<V> of(final String name0, final V value0,
-                                                             final String name1, final V value1) {
-    final SortedMap<String, V> map = new TreeMap<>();
+  public static final <K extends Constable & Comparable<K>, V extends Constable> Qualifiers<K, V> of(final K name0, final V value0,
+                                                                                                     final K name1, final V value1) {
+    final SortedMap<K, V> map = new TreeMap<>();
     map.put(name0, value0);
     map.put(name1, value1);
     return new Qualifiers<>(map);
@@ -630,6 +656,9 @@ public final class Qualifiers<V extends Constable> implements Constable {
   /**
    * Returns a {@link Qualifiers} consisting of the entries
    * represented by the supplied alternating name-value pairs.
+   *
+   * @param <K> the type borne by the keys of the qualifiers in the
+   * returned {@link Qualifiers}
    *
    * @param <V> the type borne by the values of the qualifiers in the
    * returned {@link Qualifiers}
@@ -659,10 +688,10 @@ public final class Qualifiers<V extends Constable> implements Constable {
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public static final <V extends Constable> Qualifiers<V> of(final String name0, final V value0,
-                                                             final String name1, final V value1,
-                                                             final String name2, final V value2) {
-    final SortedMap<String, V> map = new TreeMap<>();
+  public static final <K extends Constable & Comparable<K>, V extends Constable> Qualifiers<K, V> of(final K name0, final V value0,
+                                                                                                     final K name1, final V value1,
+                                                                                                     final K name2, final V value2) {
+    final SortedMap<K, V> map = new TreeMap<>();
     map.put(name0, value0);
     map.put(name1, value1);
     map.put(name2, value2);
@@ -678,6 +707,9 @@ public final class Qualifiers<V extends Constable> implements Constable {
    * zero-based even-numbered elements are {@link String}s represents
    * qualifier names, and the zero-based odd-numbered {@link
    * Constable} elements represent qualifier values.</p>
+   *
+   * @param <K> the type borne by the keys of the qualifiers in the
+   * returned {@link Qualifiers}
    *
    * @param <V> the type borne by the values of the qualifiers in the
    * returned {@link Qualifiers}
@@ -704,15 +736,15 @@ public final class Qualifiers<V extends Constable> implements Constable {
    * threads.
    */
   @SuppressWarnings("unchecked")
-  public static final <V extends Constable> Qualifiers<V> of(final Constable... nameValuePairs) {
+  public static final <K extends Constable & Comparable<K>, V extends Constable> Qualifiers<K, V> of(final Constable... nameValuePairs) {
     if (nameValuePairs == null || nameValuePairs.length <= 0) {
       return Qualifiers.of();
     } else if (nameValuePairs.length % 2 != 0) {
       throw new IllegalArgumentException("nameValuePairs: " + Arrays.toString(nameValuePairs));
     } else {
-      final SortedMap<String, V> map = new TreeMap<>();
+      final SortedMap<K, V> map = new TreeMap<>();
       for (int i = 0; i < nameValuePairs.length; i++) {
-        map.put((String)nameValuePairs[i++], (V)nameValuePairs[i]);
+        map.put((K)nameValuePairs[i++], (V)nameValuePairs[i]);
       }
       return new Qualifiers<>(map);
     }
