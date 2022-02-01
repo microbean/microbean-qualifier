@@ -50,6 +50,14 @@ public final class ConstantDescs {
   public static final ClassDesc CD_Qualified = ClassDesc.of(Qualified.class.getName());
 
   /**
+   * A {@link ClassDesc} describing {@link Qualified.Record
+   * org.microbean.qualifier.Qualified.Record}.
+   *
+   * @nullability This field is never {@code null}.
+   */
+  public static final ClassDesc CD_QualifiedRecord = ClassDesc.of(Qualified.Record.class.getName());
+
+  /**
    * A {@link ClassDesc} describing {@link Qualifiers org.microbean.qualifier.Qualifiers}.
    *
    * @nullability This field is never {@code null}.
@@ -65,5 +73,6 @@ public final class ConstantDescs {
   private ConstantDescs() {
     super();
   }
+
 
 }

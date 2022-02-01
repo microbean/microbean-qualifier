@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.microbean.development.annotation.Experimental;
+import org.microbean.development.annotation.OverridingEncouraged;
 
 import static java.lang.constant.ConstantDescs.BSM_INVOKE;
 import static java.lang.constant.ConstantDescs.CD_Object;
@@ -33,46 +34,31 @@ import static java.lang.constant.ConstantDescs.DEFAULT_NAME;
 import static java.lang.constant.ConstantDescs.NULL;
 import static java.lang.constant.DirectMethodHandleDesc.Kind.STATIC;
 
-import static org.microbean.qualifier.ConstantDescs.CD_Qualified;
+import static org.microbean.qualifier.ConstantDescs.CD_Constable;
+import static org.microbean.qualifier.ConstantDescs.CD_QualifiedRecord;
 import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
 
 /**
- * A {@link Constable} pairing of a {@link Qualifiers} and a thing
- * that is qualified by them.
+ * A {@link Constable} pairing of a {@link Qualifiers} and a {@link
+ * Constable} that is qualified by them.
+ *
+ * @param <K> the type borne by the keys of the {@link Qualifiers} in
+ * this {@link Qualified}
+ *
+ * @param <V> the type borne by the values of the {@link Qualifiers}
+ * in this {@link Qualified}
  *
  * @param <T> the type of the thing that is qualified
- *
- * @param qualifiers the {@link Qualifiers}; must not be {@code null}
- *
- * @param qualified the thing being qualified; may be {@code null}
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  *
  * @see Qualifiers
+ *
+ * @see Constable
  */
 @Experimental
-public record Qualified<T>(Qualifiers<?, ?> qualifiers, T qualified) implements Constable {
-
-
-  /*
-   * Canonical constructor.
-   */
-
-
-  /**
-   * Creates a new {@link Qualified}.
-   *
-   * @param qualifiers the {@link Qualifiers}; must not be {@code null}
-   *
-   * @param qualified the thing being qualified; may be {@code null}
-   *
-   * @exception NullPointerException if {@code qualifiers} is {@code
-   * null}
-   */
-  public Qualified {
-    qualifiers = Objects.requireNonNull(qualifiers, "qualifiers");
-  }
+public interface Qualified<K extends Constable & Comparable<K>, V extends Constable, T extends Constable> extends Constable {
 
 
   /*
@@ -81,52 +67,126 @@ public record Qualified<T>(Qualifiers<?, ?> qualifiers, T qualified) implements 
 
 
   /**
-   * Returns an {@link Optional} containing the nominal descriptor for
-   * this instance, if one can be constructed, or an {@linkplain
+   * Returns the {@link Qualifiers} that qualifies this {@link
+   * Qualified}.
+   *
+   * @return the {@link Qualifiers} that qualifies this {@link
+   * Qualified}; never {@code null}
+   *
+   * @nullability Implementations of this method must not return
+   * {@code null}.
+   *
+   * @idempotency Implementations of this method must be idempotent
+   * and deterministic.
+   *
+   * @threadsafety Implementations of this method must be safe for
+   * concurrent use by multiple threads.
+   */
+  public Qualifiers<K, V> qualifiers();
+
+  /**
+   * Returns the qualified thing this {@link Qualified} represents.
+   *
+   * @return the qualified thing this {@link Qualified} represents;
+   * possibly, but not normally, {@code null}
+   *
+   * @nullability Implementations of this method may return {@code
+   * null}.
+   *
+   * @idempotency Implementations of this method must be idempotent
+   * and deterministic.
+   *
+   * @threadsafety Implementations of this method must be safe for
+   * concurrent use by multiple threads.
+   */
+  public T qualified();
+
+  /**
+   * Returns an {@link Optional} containing the nominal descriptor
+   * for this instance, if one can be constructed, or an {@linkplain
    * Optional#isEmpty() empty} {@link Optional} if one cannot be
    * constructed.
    *
-   * <p>This method will return an {@linkplain Optional#isEmpty()
-   * empty} {@link Optional} if the return value of {@link
-   * #qualified()} is not {@code null} and is not an instance of
-   * {@link Constable}.</p>
-   *
-   * @return an {@link Optional} containing the nominal descriptor for
-   * this instance, if one can be constructed, or an {@linkplain
+   * @return an {@link Optional} containing the nominal descriptor
+   * for this instance, if one can be constructed, or an {@linkplain
    * Optional#isEmpty() empty} {@link Optional} if one cannot be
    * constructed; never {@code null}
    *
-   * @nullability This method never returns {@code null}.
+   * @nullability This method does not, and its overrides must not,
+   * return {@code null}.
    *
-   * @idempotency This method is idempotent and deterministic.
+   * @idempotency This method is, and its overrides must be,
+   * idempotent and deterministic.
    *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
+   * @threadsafety This method is, and its overrides must be, safe for
+   * concurrent use by multiple threads.
    */
   @Override // Constable
-  public final Optional<? extends ConstantDesc> describeConstable() {
-    final Optional<? extends ConstantDesc> qualifiersDesc = this.qualifiers().describeConstable();
-    if (qualifiersDesc.isPresent()) {
-      final T qualified = this.qualified();
-      final Optional<? extends ConstantDesc> qualifiedDesc;
-      if (qualified == null) {
-        qualifiedDesc = Optional.of(NULL);
-      } else if (qualified instanceof Constable c) {
-        qualifiedDesc = c.describeConstable();
-      } else {
-        qualifiedDesc = Optional.empty();
-      }
-      if (qualifiedDesc.isPresent()) {
+  public default Optional<? extends ConstantDesc> describeConstable() {
+    final ConstantDesc qualifiersDesc = this.qualifiers().describeConstable().orElse(null);
+    if (qualifiersDesc != null) {
+      final Constable qualified = this.qualified();
+      final ConstantDesc qualifiedDesc = qualified == null ? NULL : qualified.describeConstable().orElse(null);
+      if (qualifiedDesc != null) {
         return
           Optional.of(DynamicConstantDesc.ofNamed(BSM_INVOKE,
                                                   DEFAULT_NAME,
-                                                  CD_Qualified,
-                                                  MethodHandleDesc.ofConstructor(CD_Qualified,
+                                                  CD_QualifiedRecord,
+                                                  MethodHandleDesc.ofConstructor(CD_QualifiedRecord,
                                                                                  CD_Qualifiers,
-                                                                                 CD_Object)));
+                                                                                 CD_Constable),
+                                                  qualifiersDesc,
+                                                  qualifiedDesc));
       }
     }
     return Optional.empty();
+  }
+
+
+  /*
+   * Inner and nested classes.
+   */
+
+
+  /**
+   * A {@link Qualified} {@link java.lang.Record}.
+   *
+   * @param <K> the type borne by the keys of the {@link Qualifiers} in
+   * this {@link Qualified.Record}
+   *
+   * @param <V> the type borne by the values of the {@link Qualifiers}
+   * in this {@link Qualified.Record}
+   *
+   * @param <T> the type of the thing that is qualified
+   *
+   * @author <a href="https://about.me/lairdnelson"
+   * target="_parent">Laird Nelson</a>
+   */
+  public static final record Record<K extends Constable & Comparable<K>, V extends Constable, T extends Constable>(Qualifiers<K, V> qualifiers,
+                                                                                                                   T qualified)
+    implements Qualified<K, V, T> {
+
+
+    /*
+     * Canonical constructor.
+     */
+
+
+    /**
+     * Creates a new {@link Record}.
+     *
+     * @param qualifiers the {@link Qualifiers}; must not be {@code
+     * null}
+     *
+     * @param qualified the thing being qualified; may be {@code null}
+     *
+     * @exception NullPointerException if {@code qualifiers} is {@code
+     * null}
+     */
+    public Record {
+      qualifiers = Objects.requireNonNull(qualifiers, "qualifiers");
+    }
+
   }
 
 }
