@@ -16,9 +16,14 @@
  */
 
 /**
- * Provides classes and interfaces related to qualifiers.
+ * Provides classes and interfaces related to <em>qualifiers</em>,
+ * key-value pairs that help describe the features of something.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
+ *
+ * @see org.microbean.qualifier.Qualifiers
+ *
+ * @see org.microbean.qualifier.Qualified
  */
 package org.microbean.qualifier;
