@@ -1,1 +1,1 @@
-typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"org.microbean.qualifier","l":"ConstantDescs"},{"p":"org.microbean.qualifier","l":"Qualified"},{"p":"org.microbean.qualifier","l":"Qualifiers"}];updateSearchResults();
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"org.microbean.qualifier","l":"ConstantDescs"},{"p":"org.microbean.qualifier","l":"Qualified"},{"p":"org.microbean.qualifier","l":"Qualifiers"},{"p":"org.microbean.qualifier","l":"Qualified.Record"}];updateSearchResults();
