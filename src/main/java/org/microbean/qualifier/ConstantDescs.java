@@ -19,7 +19,7 @@ package org.microbean.qualifier;
 import java.lang.constant.ClassDesc;
 
 /**
- * A utiliy class containing useful {@link
+ * A utility class containing useful {@link
  * java.lang.constant.ConstantDesc}s (mostly {@link ClassDesc}s).
  *
  * @author <a href="https://about.me/lairdnelson"
@@ -33,13 +33,7 @@ public final class ConstantDescs {
    */
 
 
-  /**
-   * A {@link ClassDesc} describing {@link
-   * java.lang.constant.Constable java.lang.constant.Constable}.
-   *
-   * @nullability This field is never {@code null}.
-   */
-  public static final ClassDesc CD_Constable = ClassDesc.of("java.lang.constant.Constable");
+  static final ClassDesc CD_Constable = ClassDesc.of("java.lang.constant.Constable");
 
   /**
    * A {@link ClassDesc} describing {@link Qualified

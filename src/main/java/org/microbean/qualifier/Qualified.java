@@ -107,6 +107,13 @@ public interface Qualified<K extends Constable & Comparable<K>, V extends Consta
    * Optional#isEmpty() empty} {@link Optional} if one cannot be
    * constructed.
    *
+   * <p>The default implementation of this method returns an {@link
+   * Optional Optional&lt;? extends ConstantDesc&gt;} that is computed
+   * from only the return value of the {@link #qualifiers()} method
+   * and the return value of the {@link #qualified()} method.  This
+   * may or may not be sufficient for any given subclass'
+   * semantics.</p>
+   *
    * @return an {@link Optional} containing the nominal descriptor
    * for this instance, if one can be constructed, or an {@linkplain
    * Optional#isEmpty() empty} {@link Optional} if one cannot be
@@ -122,6 +129,7 @@ public interface Qualified<K extends Constable & Comparable<K>, V extends Consta
    * concurrent use by multiple threads.
    */
   @Override // Constable
+  @OverridingEncouraged
   public default Optional<? extends ConstantDesc> describeConstable() {
     final ConstantDesc qualifiersDesc = this.qualifiers().describeConstable().orElse(null);
     if (qualifiersDesc != null) {
