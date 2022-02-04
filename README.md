@@ -32,7 +32,7 @@ as a Maven dependency:
   <groupId>org.microbean</groupId>
   <artifactId>microbean-qualifier</artifactId>
   <!-- Always check https://search.maven.org/artifact/org.microbean/microbean-qualifier for up-to-date available versions. -->
-  <version>0.0.3</version>
+  <version>0.0.4</version>
 </dependency>
 ```
 
