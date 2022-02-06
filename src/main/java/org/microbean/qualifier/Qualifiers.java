@@ -30,8 +30,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.Spliterator;
 import java.util.TreeMap;
 
 import java.util.function.Function;
@@ -49,9 +52,11 @@ import static org.microbean.qualifier.ConstantDescs.CD_Constable;
 import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
 
 /**
- * A {@link Constable}, immutable set of
- * key-value pairs that can be used to further qualify an object for
- * many different purposes.
+ * A {@link Constable}, immutable, sorted set of key-value pairs that
+ * can be used to further qualify an object for many different
+ * purposes.
+ *
+ * <p>Keys are sorted according to their natural order.</p>
  *
  * <p>This is a <a
  * href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/doc-files/ValueBased.html">value-based
@@ -76,16 +81,12 @@ import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
  * @param <V> the type borne by the values of the qualifiers in this
  * {@link Qualifiers}
  *
- * @param qualifiers a {@link Map} representing the qualifiers; may be
- * {@code null} in which case an {@linkplain Map#isEmpty() empty
- * <code>Map</code>} will be used instead
- *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  *
  * @see #of(Constable, Constable)
  */
-public final record Qualifiers<K extends Constable & Comparable<K>, V extends Constable>(Map<K, V> qualifiers) implements Constable {
+public final class Qualifiers<K extends Constable & Comparable<K>, V extends Constable> implements Constable, Iterable<Entry<K, V>> {
 
 
   /*
@@ -97,12 +98,21 @@ public final record Qualifiers<K extends Constable & Comparable<K>, V extends Co
 
 
   /*
+   * Instance fields.
+   */
+
+
+  private final SortedMap<K, V> qualifiers;
+
+
+  /*
    * Constructors.
    */
 
 
   /**
-   * Creates a new {@linkplain Map#isEmpty() empty} {@link Qualifiers}.
+   * Creates a new {@linkplain Map#isEmpty() empty} {@link
+   * Qualifiers}.
    */
   public Qualifiers() {
     this(null);
@@ -115,11 +125,11 @@ public final record Qualifiers<K extends Constable & Comparable<K>, V extends Co
    * {@code null} in which case an {@linkplain Map#isEmpty() empty
    * <code>Map</code>} will be used instead
    */
-  public Qualifiers {
+  public Qualifiers(final Map<? extends K, ? extends V> qualifiers) {
     if (qualifiers == null || qualifiers.isEmpty()) {
-      qualifiers = emptySortedMap();
+      this.qualifiers = emptySortedMap();
     } else {
-      qualifiers = unmodifiableSortedMap(new TreeMap<>(qualifiers));
+      this.qualifiers = unmodifiableSortedMap(new TreeMap<>(qualifiers));
     }
   }
 
@@ -128,6 +138,76 @@ public final record Qualifiers<K extends Constable & Comparable<K>, V extends Co
    * Instance methods.
    */
 
+
+  /**
+   * Returns {@code true} if this {@link Qualifiers} is logically empty.
+   *
+   * @return {@code true} if this {@link Qualifiers} is logically
+   * empty
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see #size()
+   */
+  public final boolean isEmpty() {
+    return this.qualifiers.isEmpty();
+  }
+
+  /**
+   * Returns {@code 0} or a positive integer describing the number of
+   * entries contained by this {@link Qualifiers}.
+   *
+   * @return the size of this {@link Qualifiers}
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  public final int size() {
+    return this.qualifiers.size();
+  }
+
+  /**
+   * Returns a non-{@code null}, immutable {@link Iterator} of {@link
+   * Entry} instances contained by this {@link Qualifiers}.
+   *
+   * @return a non-{@code null}, immutable {@link Iterator} of {@link
+   * Entry} instances contained by this {@link Qualifiers}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  @Override // Iterable<K, V>
+  public final Iterator<Entry<K, V>> iterator() {
+    return this.qualifiers.entrySet().iterator();
+  }
+
+  /**
+   * Returns a non-{@code null}, immutable {@link Spliterator} of
+   * {@link Entry} instances contained by this {@link Qualifiers}.
+   *
+   * @return a non-{@code null}, immutable {@link Spliterator} of
+   * {@link Entry} instances contained by this {@link Qualifiers}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  @Override // Iterable<K, V>
+  public final Spliterator<Entry<K, V>> spliterator() {
+    return this.qualifiers.entrySet().spliterator();
+  }
 
   /**
    * Returns {@code true} if this {@link Qualifiers} logically
@@ -168,7 +248,67 @@ public final record Qualifiers<K extends Constable & Comparable<K>, V extends Co
    * @see Set#containsAll(java.util.Collection)
    */
   public final boolean contains(final Qualifiers<?, ?> other) {
-    return this == other || this.qualifiers().size() >= other.qualifiers().size() && this.qualifiers().entrySet().containsAll(other.qualifiers().entrySet());
+    return this == other || this.qualifiers.size() >= other.qualifiers.size() && this.qualifiers.entrySet().containsAll(other.qualifiers.entrySet());
+  }
+
+  /**
+   * Returns {@code true} if and only if this {@link Qualifiers}
+   * logically contains an entry equal to the supplied {@link Entry}.
+   *
+   * @param e the {@link Entry} to test; may be {@code null} in which
+   * case {@code false} will be returned
+   *
+   * @return {@code true} if and only if this {@link Qualifiers}
+   * logically contains an entry equal to the supplied {@link Entry}
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  public final boolean contains(final Entry<?, ?> e) {
+    final Object v = e == null ? null : this.qualifiers.get(e.getKey());
+    return v != null && v.equals(e.getValue());
+  }
+
+  /**
+   * Returns {@code true} if and only if this {@link Qualifiers}
+   * logically contains a key equal to the supplied {@code key}.
+   *
+   * @param key the key in question; may be {@code null} in which case
+   * {@code false} will be returned
+   *
+   * @return {@code true} if and only if this {@link Qualifiers}
+   * logically contains a key equal to the supplied {@code key}
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  public final boolean containsKey(final Object key) {
+    return key != null && this.qualifiers.containsKey(key);
+  }
+
+  /**
+   * Returns the value indexed under the supplied {@code key}, or
+   * {@code null} if there is no such value.
+   *
+   * @param key the key in question; may be {@code null} in which case
+   * {@code false} will be returned
+   *
+   * @return the value indexed under the supplied {@code key}, or
+   * {@code null} if there is no such value
+   *
+   * @nullability This method may return {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  public final V get(final Object key) {
+    return key == null ? null : this.qualifiers.get(key);
   }
 
   /**
@@ -212,12 +352,12 @@ public final record Qualifiers<K extends Constable & Comparable<K>, V extends Co
   public final int intersectionSize(final Qualifiers<?, ?> other) {
     if (other == this) {
       // Just an identity check to rule this easy case out.
-      return this.qualifiers().size();
-    } else if (other == null || other.qualifiers().isEmpty()) {
+      return this.qualifiers.size();
+    } else if (other == null || other.qualifiers.isEmpty()) {
       return 0;
     } else {
-      final Collection<? extends Entry<?, ?>> otherEntrySet = other.qualifiers().entrySet();
-      return (int)this.qualifiers().entrySet()
+      final Collection<? extends Entry<?, ?>> otherEntrySet = other.qualifiers.entrySet();
+      return (int)this.qualifiers.entrySet()
         .stream()
         .filter(otherEntrySet::contains)
         .count();
@@ -235,9 +375,7 @@ public final record Qualifiers<K extends Constable & Comparable<K>, V extends Co
    * in one {@link Qualifiers} instance but not in the other.</p>
    *
    * @param other the other {@link Qualifiers} instance; may be {@code
-   * null} in which case the return value of an invocation of this
-   * {@link Qualifiers}' {@link #qualifiers() qualifiers}' {@link
-   * Map#size()} method will be returned
+   * null}
    *
    * @return the size of the <em>symmetric difference</em> between
    * this {@link Qualifiers} and the supplied {@link Qualifiers};
@@ -253,12 +391,12 @@ public final record Qualifiers<K extends Constable & Comparable<K>, V extends Co
       // Just an identity check to rule this easy case out.
       return 0;
     } else if (other == null || other.qualifiers.isEmpty()) {
-      return this.qualifiers().size();
+      return this.qualifiers.size();
     } else if (this.equals(other)) {
       return 0;
     } else {
-      final Collection<Entry<?, ?>> otherSymmetricDifference = new HashSet<>(this.qualifiers().entrySet());
-      other.qualifiers().entrySet().stream()
+      final Collection<Entry<?, ?>> otherSymmetricDifference = new HashSet<>(this.qualifiers.entrySet());
+      other.qualifiers.entrySet().stream()
         .filter(Predicate.not(otherSymmetricDifference::add))
         .forEach(otherSymmetricDifference::remove);
       return otherSymmetricDifference.size();
@@ -282,7 +420,7 @@ public final record Qualifiers<K extends Constable & Comparable<K>, V extends Co
    */
   @Override // Constable
   public final Optional<? extends ConstantDesc> describeConstable() {
-    final Collection<Entry<K, V>> entrySet = this.qualifiers().entrySet();
+    final Collection<Entry<K, V>> entrySet = this.qualifiers.entrySet();
     if (entrySet.isEmpty()) {
       return
         Optional.of(DynamicConstantDesc.ofNamed(BSM_INVOKE,
@@ -324,6 +462,70 @@ public final record Qualifiers<K extends Constable & Comparable<K>, V extends Co
   }
 
   /**
+   * Returns a hashcode for this {@link Qualifiers}.
+   *
+   * @return a hashcode for this {@link Qualifiers}
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see Object#hashCode()
+   */
+  @Override // Object
+  public final int hashCode() {
+    return this.qualifiers.hashCode();
+  }
+
+  /**
+   * Returns {@code true} if this {@link Qualifiers} is equal to the
+   * supplied {@link Object}.
+   *
+   * @param other the object to test; may be {@code null} in which
+   * case {@code false} will be returned
+   *
+   * @return {@code true} if this {@link Qualifiers} is equal to the
+   * supplied {@link Object}; {@code false} otherwise
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe  for concurrent use by multiple
+   * threads.
+   */
+  @Override // Object
+  public final boolean equals(final Object other) {
+    if (other == this) {
+      return true;
+    } else if (other != null && other.getClass() == this.getClass()) {
+      final Qualifiers<?, ?> her = (Qualifiers<?, ?>)other;
+      return
+        Objects.equals(this.qualifiers, her.qualifiers);
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * Returns a non-{@code null} {@link String} representation of this
+   * {@link Qualifiers}.
+   *
+   * @return a non-{@code null} {@link String} representation of this
+   * {@link Qualifiers}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe  for concurrent use by multiple
+   * threads.
+   */
+  @Override // Object
+  public final String toString() {
+    return this.qualifiers.toString();
+  }
+
+  /**
    * Returns a <strong>new</strong> {@link Qualifiers} whose keys are
    * produced by the supplied {@link Function}, which is expected to
    * prepend a prefix to the original key and return the result.
@@ -350,7 +552,7 @@ public final record Qualifiers<K extends Constable & Comparable<K>, V extends Co
    */
   public final <K2 extends Constable & Comparable<K2>> Qualifiers<K2, V> withPrefix(final Function<? super K, ? extends K2> f) {
     final Map<K2, V> map = new TreeMap<>();
-    for (final Entry<? extends K, ? extends V> entry : this.qualifiers().entrySet()) {
+    for (final Entry<? extends K, ? extends V> entry : this.qualifiers.entrySet()) {
       map.put(f.apply(entry.getKey()), entry.getValue());
     }
     return new Qualifiers<>(map);
@@ -363,8 +565,7 @@ public final record Qualifiers<K extends Constable & Comparable<K>, V extends Co
 
 
   /**
-   * Returns a {@link Qualifiers} whose {@link #qualifiers()} method
-   * returns an {@linkplain Map#isEmpty() empty <code>Map</code>}.
+   * Returns a {@link Qualifiers} that is logically empty.
    *
    * @param <K> the type borne by the keys of the qualifiers in the
    * returned {@link Qualifiers} (somewhat moot since the returned
@@ -374,8 +575,7 @@ public final record Qualifiers<K extends Constable & Comparable<K>, V extends Co
    * returned {@link Qualifiers} (somewhat moot since the returned
    * {@link Qualifiers} will be empty)
    *
-   * @return a {@link Qualifiers} whose {@link #qualifiers()} method
-   * returns an {@linkplain Map#isEmpty() empty <code>Map</code>}
+   * @return a {@link Qualifiers} that is logically empty
    *
    * @nullability This method never returns {@code null}.
    *
