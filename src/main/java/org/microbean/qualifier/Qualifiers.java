@@ -115,7 +115,7 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    * Qualifiers}.
    */
   public Qualifiers() {
-    this(null);
+    this(Map.of(), false);
   }
 
   /**
@@ -126,10 +126,17 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    * <code>Map</code>} will be used instead
    */
   public Qualifiers(final Map<? extends K, ? extends V> qualifiers) {
+    this(qualifiers, true);
+  }
+
+  @SuppressWarnings("unchecked")
+  private Qualifiers(final Map<? extends K, ? extends V> qualifiers, final boolean copy) {
     if (qualifiers == null || qualifiers.isEmpty()) {
       this.qualifiers = emptySortedMap();
-    } else {
+    } else if (copy || !(qualifiers instanceof SortedMap)) {
       this.qualifiers = unmodifiableSortedMap(new TreeMap<>(qualifiers));
+    } else {
+      this.qualifiers = unmodifiableSortedMap((SortedMap<K, V>)qualifiers);
     }
   }
 
@@ -138,7 +145,7 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    * Instance methods.
    */
 
-
+  
   /**
    * Returns {@code true} if this {@link Qualifiers} is logically empty.
    *
@@ -555,7 +562,77 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
     for (final Entry<? extends K, ? extends V> entry : this.qualifiers.entrySet()) {
       map.put(f.apply(entry.getKey()), entry.getValue());
     }
-    return new Qualifiers<>(map);
+    return new Qualifiers<>(map, false);
+  }
+
+  /**
+   * Returns a {@link Qualifiers} with additional
+   * entries sourced from the supplied {@link Qualifiers}.
+   *
+   * <p>The returned {@link Qualifiers} <strong>will be new</strong>
+   * unless {@code qualifiers} is {@code null} or {@linkplain
+   * #isEmpty() empty}, in which case {@code this} will be
+   * returned.</p>
+   *
+   * @param qualifiers a {@link Qualifiers} whose entries will be part
+   * of the new {@link Qualifiers}, displacing any that already exist;
+   * may be {@code null} or {@linkplain Map#isEmpty() empty} in which
+   * case {@code this} will be returned; all keys and values must be
+   * immutable (not just unmodifiable) or undefined behavior will
+   * result
+   *
+   * @return a {@link Qualifiers} with additional entries sourced from
+   * the supplied {@link Qualifiers}; never {@code null}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  public final Qualifiers<K, V> plus(final Qualifiers<? extends K, ? extends V> qualifiers) {
+    if (qualifiers == null || qualifiers.isEmpty()) {
+      return this;
+    } else {
+      return new Qualifiers<>(qualifiers.qualifiers, false);
+    }
+  }
+
+  /**
+   * Returns a {@link Qualifiers} with additional
+   * entries sourced from the supplied {@link Map}.
+   *
+   * <p>The returned {@link Qualifiers} <strong>will be new</strong>
+   * unless {@code qualifiers} is {@code null} or {@linkplain
+   * Map#isEmpty() empty}, in which case {@code this} will be
+   * returned.</p>
+   *
+   * @param qualifiers a {@link Map} whose entries will be part of the
+   * new {@link Qualifiers}, displacing any that already exist; may be
+   * {@code null} or {@linkplain Map#isEmpty() empty} in which case
+   * {@code this} will be returned; all keys and values must be
+   * immutable (not just unmodifiable) or undefined behavior will
+   * result
+   *
+   * @return a {@link Qualifiers} with additional entries sourced from
+   * the supplied {@link Map}; never {@code null}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  public final Qualifiers<K, V> plus(final Map<? extends K, ? extends V> qualifiers) {
+    if (qualifiers == null || qualifiers.isEmpty()) {
+      return this;
+    } else {
+      final Map<K, V> map = new TreeMap<>(this.qualifiers);
+      map.putAll(qualifiers);
+      return new Qualifiers<>(map, false);
+    }
   }
 
 
