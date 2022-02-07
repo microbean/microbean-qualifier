@@ -145,7 +145,7 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    * Instance methods.
    */
 
-  
+
   /**
    * Returns {@code true} if this {@link Qualifiers} is logically empty.
    *
@@ -160,7 +160,7 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    * @see #size()
    */
   public final boolean isEmpty() {
-    return this.qualifiers.isEmpty();
+    return this.toMap().isEmpty();
   }
 
   /**
@@ -175,7 +175,7 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    * threads.
    */
   public final int size() {
-    return this.qualifiers.size();
+    return this.toMap().size();
   }
 
   /**
@@ -194,7 +194,7 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    */
   @Override // Iterable<K, V>
   public final Iterator<Entry<K, V>> iterator() {
-    return this.qualifiers.entrySet().iterator();
+    return this.toMap().entrySet().iterator();
   }
 
   /**
@@ -213,7 +213,7 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    */
   @Override // Iterable<K, V>
   public final Spliterator<Entry<K, V>> spliterator() {
-    return this.qualifiers.entrySet().spliterator();
+    return this.toMap().entrySet().spliterator();
   }
 
   /**
@@ -255,7 +255,7 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    * @see Set#containsAll(java.util.Collection)
    */
   public final boolean contains(final Qualifiers<?, ?> other) {
-    return this == other || this.qualifiers.size() >= other.qualifiers.size() && this.qualifiers.entrySet().containsAll(other.qualifiers.entrySet());
+    return this == other || this.size() >= other.size() && this.toMap().entrySet().containsAll(other.toMap().entrySet());
   }
 
   /**
@@ -274,7 +274,7 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    * threads.
    */
   public final boolean contains(final Entry<?, ?> e) {
-    final Object v = e == null ? null : this.qualifiers.get(e.getKey());
+    final Object v = e == null ? null : this.toMap().get(e.getKey());
     return v != null && v.equals(e.getValue());
   }
 
@@ -294,7 +294,7 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    * threads.
    */
   public final boolean containsKey(final Object key) {
-    return key != null && this.qualifiers.containsKey(key);
+    return key != null && this.toMap().containsKey(key);
   }
 
   /**
@@ -315,7 +315,7 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    * threads.
    */
   public final V get(final Object key) {
-    return key == null ? null : this.qualifiers.get(key);
+    return key == null ? null : this.toMap().get(key);
   }
 
   /**
@@ -359,12 +359,12 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
   public final int intersectionSize(final Qualifiers<?, ?> other) {
     if (other == this) {
       // Just an identity check to rule this easy case out.
-      return this.qualifiers.size();
-    } else if (other == null || other.qualifiers.isEmpty()) {
+      return this.size();
+    } else if (other == null || other.isEmpty()) {
       return 0;
     } else {
-      final Collection<? extends Entry<?, ?>> otherEntrySet = other.qualifiers.entrySet();
-      return (int)this.qualifiers.entrySet()
+      final Collection<? extends Entry<?, ?>> otherEntrySet = other.toMap().entrySet();
+      return (int)this.toMap().entrySet()
         .stream()
         .filter(otherEntrySet::contains)
         .count();
@@ -397,13 +397,15 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
     if (other == this) {
       // Just an identity check to rule this easy case out.
       return 0;
-    } else if (other == null || other.qualifiers.isEmpty()) {
-      return this.qualifiers.size();
+    } else if (other == null || other.isEmpty()) {
+      return this.size();
     } else if (this.equals(other)) {
       return 0;
     } else {
-      final Collection<Entry<?, ?>> otherSymmetricDifference = new HashSet<>(this.qualifiers.entrySet());
-      other.qualifiers.entrySet().stream()
+      final Collection<Entry<?, ?>> otherSymmetricDifference = new HashSet<>(this.toMap().entrySet());
+      other.toMap()
+        .entrySet()
+        .stream()
         .filter(Predicate.not(otherSymmetricDifference::add))
         .forEach(otherSymmetricDifference::remove);
       return otherSymmetricDifference.size();
@@ -427,7 +429,7 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    */
   @Override // Constable
   public final Optional<? extends ConstantDesc> describeConstable() {
-    final Collection<Entry<K, V>> entrySet = this.qualifiers.entrySet();
+    final Collection<Entry<K, V>> entrySet = this.toMap().entrySet();
     if (entrySet.isEmpty()) {
       return
         Optional.of(DynamicConstantDesc.ofNamed(BSM_INVOKE,
@@ -482,7 +484,7 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    */
   @Override // Object
   public final int hashCode() {
-    return this.qualifiers.hashCode();
+    return this.toMap().hashCode();
   }
 
   /**
@@ -507,7 +509,7 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
     } else if (other != null && other.getClass() == this.getClass()) {
       final Qualifiers<?, ?> her = (Qualifiers<?, ?>)other;
       return
-        Objects.equals(this.qualifiers, her.qualifiers);
+        Objects.equals(this.toMap(), her.toMap());
     } else {
       return false;
     }
@@ -529,7 +531,7 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    */
   @Override // Object
   public final String toString() {
-    return this.qualifiers.toString();
+    return this.toMap().toString();
   }
 
   /**
@@ -559,7 +561,7 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    */
   public final <K2 extends Constable & Comparable<K2>> Qualifiers<K2, V> withPrefix(final Function<? super K, ? extends K2> f) {
     final Map<K2, V> map = new TreeMap<>();
-    for (final Entry<? extends K, ? extends V> entry : this.qualifiers.entrySet()) {
+    for (final Entry<? extends K, ? extends V> entry : this.toMap().entrySet()) {
       map.put(f.apply(entry.getKey()), entry.getValue());
     }
     return new Qualifiers<>(map, false);
@@ -595,7 +597,7 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
     if (qualifiers == null || qualifiers.isEmpty()) {
       return this;
     } else {
-      return new Qualifiers<>(qualifiers.qualifiers, false);
+      return new Qualifiers<>(qualifiers.toMap(), false);
     }
   }
 
@@ -629,10 +631,28 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
     if (qualifiers == null || qualifiers.isEmpty()) {
       return this;
     } else {
-      final Map<K, V> map = new TreeMap<>(this.qualifiers);
+      final Map<K, V> map = new TreeMap<>(this.toMap());
       map.putAll(qualifiers);
       return new Qualifiers<>(map, false);
     }
+  }
+
+  /**
+   * Returns an immutable {@link Map} representation of this {@link
+   * Qualifiers}.
+   *
+   * @return an immutable {@link Map} representation of this {@link
+   * Qualifiers}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  public final Map<K, V> toMap() {
+    return this.qualifiers;
   }
 
 
