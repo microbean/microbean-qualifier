@@ -535,19 +535,23 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
   }
 
   /**
-   * Returns a <strong>new</strong> {@link Qualifiers} whose keys are
-   * produced by the supplied {@link Function}, which is expected to
-   * prepend a prefix to the original key and return the result.
+   * Returns a <strong>usually new</strong> {@link Qualifiers} whose
+   * keys are produced by the supplied {@link Function}, which is
+   * expected to prepend a prefix to the original key and return the
+   * result.
    *
-   * @param <K2> the type borne by the new keys
+   * <p>If this {@link Qualifiers} is {@linkplain #isEmpty() empty},
+   * then {@code this} is returned.</p>
    *
-   * @param f a non-{@code null}, deterministic, idempotent {@link
-   * Function} that accepts keys drawn from this {@link Qualifiers}'
-   * {@linkplain Map#entrySet() entry set} and returns a non-{@code
-   * null} prefixed version of that key; must not be {@code null}
+   * @param f a deterministic, idempotent {@link Function} that
+   * accepts keys drawn from this {@link Qualifiers}' {@linkplain
+   * Map#entrySet() entry set} and returns a non-{@code null} prefixed
+   * version of that key; may be {@code null} in which case {@code
+   * this} will be returned
    *
-   * @return a <strong>new</strong> {@link Qualifiers} whose keys have
-   * been prefixed by the actions of the supplied {@link Function}
+   * @return a <strong>usually new</strong> {@link Qualifiers} whose
+   * keys have been prefixed by the actions of the supplied {@link
+   * Function}
    *
    * @exception NullPointerException if {@code f} is {@code null}
    *
@@ -559,12 +563,16 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    * @threadsafety This method is safe for concurrent use by multiple
    * threads, assuming the supplied {@link Function} is
    */
-  public final <K2 extends Constable & Comparable<K2>> Qualifiers<K2, V> withPrefix(final Function<? super K, ? extends K2> f) {
-    final Map<K2, V> map = new TreeMap<>();
-    for (final Entry<? extends K, ? extends V> entry : this.toMap().entrySet()) {
-      map.put(f.apply(entry.getKey()), entry.getValue());
+  public final Qualifiers<K, V> withPrefix(final Function<? super K, ? extends K> f) {
+    if (f == null || this.isEmpty()) {
+      return this;
+    } else {
+      final Map<K, V> map = new TreeMap<>();
+      for (final Entry<? extends K, ? extends V> entry : this.toMap().entrySet()) {
+        map.put(f.apply(entry.getKey()), entry.getValue());
+      }
+      return new Qualifiers<>(map, false);
     }
-    return new Qualifiers<>(map, false);
   }
 
   /**
@@ -592,12 +600,14 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    *
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
+   *
+   * @see #plus(Map)
    */
   public final Qualifiers<K, V> plus(final Qualifiers<? extends K, ? extends V> qualifiers) {
     if (qualifiers == null || qualifiers.isEmpty()) {
       return this;
     } else {
-      return new Qualifiers<>(qualifiers.toMap(), false);
+      return this.plus(qualifiers.toMap());
     }
   }
 
