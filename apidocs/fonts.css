@@ -30,6 +30,9 @@ dl.notes > dt {
 dl.notes > dd {
     font-family: 'Roboto', 'DejaVu Sans', Arial, Helvetica, sans-serif;
 }
+strong {
+    font-weight: 700
+}
 .caption {
     font-weight: 700
 }
