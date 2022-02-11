@@ -34,13 +34,12 @@ import static java.lang.constant.ConstantDescs.DEFAULT_NAME;
 import static java.lang.constant.ConstantDescs.NULL;
 import static java.lang.constant.DirectMethodHandleDesc.Kind.STATIC;
 
-import static org.microbean.qualifier.ConstantDescs.CD_Constable;
 import static org.microbean.qualifier.ConstantDescs.CD_QualifiedRecord;
 import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
 
 /**
- * A {@link Constable} pairing of a {@link Qualifiers} and a {@link
- * Constable} that is qualified by them.
+ * A {@link Constable} pairing of a {@link Qualifiers} and an {@link
+ * Object} that is qualified by them.
  *
  * @param <K> the type borne by the keys of the {@link Qualifiers} in
  * this {@link Qualified}
@@ -48,7 +47,10 @@ import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
  * @param <V> the type borne by the values of the {@link Qualifiers}
  * in this {@link Qualified}
  *
- * @param <T> the type of the thing that is qualified
+ * @param <T> the type of the object that is qualified; note that if it
+ * does not extend {@link Constable} then a {@link Qualified} bearing
+ * it will return an {@linkplain Optional#empty() empty
+ * <code>Optional</code>} from its {@link #describeConstable()} method
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
@@ -58,7 +60,7 @@ import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
  * @see Constable
  */
 @Experimental
-public interface Qualified<K extends Constable & Comparable<K>, V extends Constable, T extends Constable> extends Constable {
+public interface Qualified<K extends Constable & Comparable<K>, V extends Constable, T> extends Constable {
 
 
   /*
@@ -102,10 +104,10 @@ public interface Qualified<K extends Constable & Comparable<K>, V extends Consta
   public T qualified();
 
   /**
-   * Returns an {@link Optional} containing the nominal descriptor
-   * for this instance, if one can be constructed, or an {@linkplain
-   * Optional#isEmpty() empty} {@link Optional} if one cannot be
-   * constructed.
+   * Returns an {@link Optional} containing the nominal descriptor for
+   * this instance, if one can be constructed, <strong>or an
+   * {@linkplain Optional#isEmpty() empty} {@link Optional} if one
+   * cannot be constructed</strong>.
    *
    * <p>The default implementation of this method returns an {@link
    * Optional Optional&lt;? extends ConstantDesc&gt;} that is computed
@@ -114,10 +116,10 @@ public interface Qualified<K extends Constable & Comparable<K>, V extends Consta
    * may or may not be sufficient for any given subclass'
    * semantics.</p>
    *
-   * @return an {@link Optional} containing the nominal descriptor
-   * for this instance, if one can be constructed, or an {@linkplain
-   * Optional#isEmpty() empty} {@link Optional} if one cannot be
-   * constructed; never {@code null}
+   * @return an {@link Optional} containing the nominal descriptor for
+   * this instance, if one can be constructed, <strong>or an
+   * {@linkplain Optional#isEmpty() empty} {@link Optional} if one
+   * cannot be constructed</strong>; never {@code null}
    *
    * @nullability This method does not, and its overrides must not,
    * return {@code null}.
@@ -133,8 +135,15 @@ public interface Qualified<K extends Constable & Comparable<K>, V extends Consta
   public default Optional<? extends ConstantDesc> describeConstable() {
     final ConstantDesc qualifiersDesc = this.qualifiers().describeConstable().orElse(null);
     if (qualifiersDesc != null) {
-      final Constable qualified = this.qualified();
-      final ConstantDesc qualifiedDesc = qualified == null ? NULL : qualified.describeConstable().orElse(null);
+      final Object qualified = this.qualified();
+      final ConstantDesc qualifiedDesc;
+      if (qualified == null) {
+        qualifiedDesc = NULL;
+      } else if (qualified instanceof Constable cq) {
+        qualifiedDesc = cq.describeConstable().orElse(null);
+      } else {
+        qualifiedDesc = null;
+      }
       if (qualifiedDesc != null) {
         return
           Optional.of(DynamicConstantDesc.ofNamed(BSM_INVOKE,
@@ -142,7 +151,7 @@ public interface Qualified<K extends Constable & Comparable<K>, V extends Consta
                                                   CD_QualifiedRecord,
                                                   MethodHandleDesc.ofConstructor(CD_QualifiedRecord,
                                                                                  CD_Qualifiers,
-                                                                                 CD_Constable),
+                                                                                 CD_Object),
                                                   qualifiersDesc,
                                                   qualifiedDesc));
       }
@@ -165,13 +174,23 @@ public interface Qualified<K extends Constable & Comparable<K>, V extends Consta
    * @param <V> the type borne by the values of the {@link Qualifiers}
    * in this {@link Qualified.Record}
    *
-   * @param <T> the type of the thing that is qualified
+   * @param <T> the type of the object that is qualified; note that if
+   * it does not extend {@link Constable} then a {@link Record}
+   * bearing it will return an {@linkplain Optional#empty() empty
+   * <code>Optional</code>} from its {@link #describeConstable()}
+   * method
+   *
+   * @param qualifiers the {@link Qualifiers}; may be {@code null} in
+   * which case the return value of {@link Qualifiers#of()} will be
+   * used instead
+   *
+   * @param qualified the object being qualified; may be {@code null}
    *
    * @author <a href="https://about.me/lairdnelson"
    * target="_parent">Laird Nelson</a>
    */
-  public static final record Record<K extends Constable & Comparable<K>, V extends Constable, T extends Constable>(Qualifiers<K, V> qualifiers,
-                                                                                                                   T qualified)
+  public static final record Record<K extends Constable & Comparable<K>, V extends Constable, T>(Qualifiers<K, V> qualifiers,
+                                                                                                 T qualified)
     implements Qualified<K, V, T> {
 
 
@@ -183,16 +202,17 @@ public interface Qualified<K extends Constable & Comparable<K>, V extends Consta
     /**
      * Creates a new {@link Record}.
      *
-     * @param qualifiers the {@link Qualifiers}; must not be {@code
-     * null}
+     * @param qualifiers the {@link Qualifiers}; may be {@code null}
+     * in which case the return value of {@link Qualifiers#of()} will
+     * be used instead
      *
-     * @param qualified the thing being qualified; may be {@code null}
-     *
-     * @exception NullPointerException if {@code qualifiers} is {@code
+     * @param qualified the object being qualified; may be {@code
      * null}
      */
     public Record {
-      qualifiers = Objects.requireNonNull(qualifiers, "qualifiers");
+      if (qualifiers == null) {
+        qualifiers = Qualifiers.of();
+      }
     }
 
   }

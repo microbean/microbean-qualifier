@@ -40,6 +40,8 @@ import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import java.util.stream.Stream;
+
 import static java.lang.constant.ConstantDescs.BSM_INVOKE;
 import static java.lang.constant.ConstantDescs.DEFAULT_NAME;
 import static java.lang.constant.ConstantDescs.NULL;
@@ -214,6 +216,42 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
   @Override // Iterable<K, V>
   public final Spliterator<Entry<K, V>> spliterator() {
     return this.toMap().entrySet().spliterator();
+  }
+
+  /**
+   * Returns a possibly parallel {@link Stream} of this {@link
+   * Qualifiers}' {@linkplain Entry entries}.
+   *
+   * @return a possibly parallel {@link Stream} of this {@link
+   * Qualifiers}' {@linkplain Entry entries}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  public final Stream<Entry<K, V>> parallelStream() {
+    return this.toMap().entrySet().parallelStream();
+  }
+
+  /**
+   * Returns a possibly parallel {@link Stream} of this {@link
+   * Qualifiers}' {@linkplain Entry entries}.
+   *
+   * @return a possibly parallel {@link Stream} of this {@link
+   * Qualifiers}' {@linkplain Entry entries}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  public final Stream<Entry<K, V>> stream() {
+    return this.toMap().entrySet().stream();
   }
 
   /**
