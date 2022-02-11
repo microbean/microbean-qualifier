@@ -141,6 +141,8 @@ public interface Qualified<K extends Constable & Comparable<K>, V extends Consta
         qualifiedDesc = NULL;
       } else if (qualified instanceof Constable cq) {
         qualifiedDesc = cq.describeConstable().orElse(null);
+      } else if (qualified instanceof ConstantDesc cd) {
+        qualifiedDesc = cd;
       } else {
         qualifiedDesc = null;
       }
