@@ -16,12 +16,12 @@
   <name>microBean™ Qualifier</name>
   <description>microBean™ Qualifier: qualifiers for Java</description>
   <inceptionYear>2022</inceptionYear>
-  <url>https://microbean.github.io/${project.artifactId}</url>
+  <url>https://microbean.github.io/microbean-qualifier</url>
 
   <scm>
-    <connection>scm:git:git@github.com:microbean/${project.artifactId}.git</connection>
-    <developerConnection>scm:git:git@github.com:microbean/${project.artifactId}.git</developerConnection>
-    <url>https://github.com/microbean/${project.artifactId}/</url>
+    <connection>scm:git:git@github.com:microbean/microbean-qualifier.git</connection>
+    <developerConnection>scm:git:git@github.com:microbean/microbean-qualifier.git</developerConnection>
+    <url>https://github.com/microbean/microbean-qualifier/</url>
     <tag>HEAD</tag>
   </scm>
 

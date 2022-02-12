@@ -43,6 +43,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static java.lang.constant.ConstantDescs.BSM_INVOKE;
+import static java.lang.constant.ConstantDescs.CD_Object;
 import static java.lang.constant.ConstantDescs.DEFAULT_NAME;
 import static java.lang.constant.ConstantDescs.NULL;
 import static java.lang.constant.DirectMethodHandleDesc.Kind.STATIC;
@@ -50,7 +51,6 @@ import static java.lang.constant.DirectMethodHandleDesc.Kind.STATIC;
 import static java.util.Collections.emptySortedMap;
 import static java.util.Collections.unmodifiableSortedMap;
 
-import static org.microbean.qualifier.ConstantDescs.CD_Constable;
 import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
 
 /**
@@ -86,9 +86,9 @@ import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  *
- * @see #of(Constable, Constable)
+ * @see #of(Comparable, Object)
  */
-public final class Qualifiers<K extends Constable & Comparable<K>, V extends Constable> implements Constable, Iterable<Entry<K, V>> {
+public final class Qualifiers<K extends Comparable<? super K>, V> implements Constable, Iterable<Entry<K, V>> {
 
 
   /*
@@ -485,18 +485,28 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
                                   CD_Qualifiers,
                                   "of",
                                   MethodTypeDesc.of(CD_Qualifiers,
-                                                    CD_Constable.arrayType()));
+                                                    CD_Object.arrayType()));
       int i = 1;
       for (final Entry<K, V> entry : entrySet) {
-        final Constable key = entry.getKey();
-        final ConstantDesc k = key == null ? null : key.describeConstable().orElse(null);
-        if (k == null) {
+        final ConstantDesc k;
+        final Object key = entry.getKey();
+        if (key instanceof Constable ck) {
+          k = ck.describeConstable().orElse(null);
+        } else if (key instanceof ConstantDesc cd) {
+          k = cd;
+        } else {
           return Optional.empty();
         }
         bsmInvokeArguments[i++] = k;
-        final Constable value = entry.getValue();
-        final ConstantDesc v = value == null ? NULL : value.describeConstable().orElse(null);
-        if (v == null) {
+        final ConstantDesc v;
+        final Object value = entry.getValue();
+        if (value == null){
+          v = NULL;
+        } else if (value instanceof Constable cv) {
+          v = cv.describeConstable().orElse(null);
+        } else if (value instanceof ConstantDesc cd) {
+          v = cd;
+        } else {
           return Optional.empty();
         }
         bsmInvokeArguments[i++] = v;
@@ -731,7 +741,7 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    */
   // Used by #describeConstable()
   @SuppressWarnings("unchecked")
-  public static final <K extends Constable & Comparable<K>, V extends Constable> Qualifiers<K, V> of() {
+  public static final <K extends Comparable<? super K>, V> Qualifiers<K, V> of() {
     return (Qualifiers<K, V>)EMPTY_QUALIFIERS;
   }
 
@@ -759,10 +769,10 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    *
-   * @see #of(Constable, Constable)
+   * @see #of(Comparable, Object)
    */
   @SuppressWarnings("unchecked")
-  public static final <K extends Constable & Comparable<K>, V extends Constable> Qualifiers<K, V> of(final Map<? extends K, ? extends V> map) {
+  public static final <K extends Comparable<? super K>, V> Qualifiers<K, V> of(final Map<? extends K, ? extends V> map) {
     if (map == null || map.isEmpty()) {
       return of();
     } else {
@@ -799,7 +809,7 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public static final <K extends Constable & Comparable<K>, V extends Constable> Qualifiers<K, V> of(final K name0, final V value0) {
+  public static final <K extends Comparable<? super K>, V> Qualifiers<K, V> of(final K name0, final V value0) {
     return new Qualifiers<>(Map.of(name0, value0));
   }
 
@@ -833,8 +843,8 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public static final <K extends Constable & Comparable<K>, V extends Constable> Qualifiers<K, V> of(final K name0, final V value0,
-                                                                                                     final K name1, final V value1) {
+  public static final <K extends Comparable<? super K>, V> Qualifiers<K, V> of(final K name0, final V value0,
+                                                                       final K name1, final V value1) {
     return new Qualifiers<>(Map.of(name0, value0, name1, value1));
   }
 
@@ -873,9 +883,9 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public static final <K extends Constable & Comparable<K>, V extends Constable> Qualifiers<K, V> of(final K name0, final V value0,
-                                                                                                     final K name1, final V value1,
-                                                                                                     final K name2, final V value2) {
+  public static final <K extends Comparable<? super K>, V> Qualifiers<K, V> of(final K name0, final V value0,
+                                                                       final K name1, final V value1,
+                                                                       final K name2, final V value2) {
     return new Qualifiers<>(Map.of(name0, value0, name1, value1, name2, value2));
   }
 
@@ -884,10 +894,10 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    * represented by the supplied alternating name-value pairs.
    *
    * <p>The supplied {@code nameValuePairs} must be an even-numbered
-   * array of non-{@code null} {@link Constable} instances, where the
-   * zero-based even-numbered elements are {@link String}s represents
-   * qualifier names, and the zero-based odd-numbered {@link
-   * Constable} elements represent qualifier values.</p>
+   * array of non-{@code null} {@link Object} instances, where the
+   * zero-based even-numbered elements represent qualifier keys, and
+   * the zero-based odd-numbered elements represent qualifier
+   * values.</p>
    *
    * @param <K> the type borne by the keys of the qualifiers in the
    * returned {@link Qualifiers}
@@ -920,7 +930,7 @@ public final class Qualifiers<K extends Constable & Comparable<K>, V extends Con
    */
   // Used by #describeConstable()
   @SuppressWarnings("unchecked")
-  public static final <K extends Constable & Comparable<K>, V extends Constable> Qualifiers<K, V> of(final Constable... nameValuePairs) {
+  public static final <K extends Comparable<? super K>, V> Qualifiers<K, V> of(final Object... nameValuePairs) {
     if (nameValuePairs == null || nameValuePairs.length <= 0) {
       return of();
     } else if (nameValuePairs.length % 2 != 0) {
