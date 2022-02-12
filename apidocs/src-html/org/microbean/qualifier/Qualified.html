@@ -74,7 +74,7 @@
 <span class="source-line-no">060</span><span id="line-60"> * @see Constable</span>
 <span class="source-line-no">061</span><span id="line-61"> */</span>
 <span class="source-line-no">062</span><span id="line-62">@Experimental</span>
-<span class="source-line-no">063</span><span id="line-63">public interface Qualified&lt;K extends Constable &amp; Comparable&lt;K&gt;, V extends Constable, T&gt; extends Constable {</span>
+<span class="source-line-no">063</span><span id="line-63">public interface Qualified&lt;K extends Comparable&lt;? super K&gt;, V, T&gt; extends Constable {</span>
 <span class="source-line-no">064</span><span id="line-64"></span>
 <span class="source-line-no">065</span><span id="line-65"></span>
 <span class="source-line-no">066</span><span id="line-66">  /*</span>
@@ -205,8 +205,8 @@
 <span class="source-line-no">191</span><span id="line-191">   * @author &lt;a href="https://about.me/lairdnelson"</span>
 <span class="source-line-no">192</span><span id="line-192">   * target="_parent"&gt;Laird Nelson&lt;/a&gt;</span>
 <span class="source-line-no">193</span><span id="line-193">   */</span>
-<span class="source-line-no">194</span><span id="line-194">  public static final record Record&lt;K extends Constable &amp; Comparable&lt;K&gt;, V extends Constable, T&gt;(Qualifiers&lt;K, V&gt; qualifiers,</span>
-<span class="source-line-no">195</span><span id="line-195">                                                                                                 T qualified)</span>
+<span class="source-line-no">194</span><span id="line-194">  public static final record Record&lt;K extends Comparable&lt;? super K&gt;, V, T&gt;(Qualifiers&lt;K, V&gt; qualifiers,</span>
+<span class="source-line-no">195</span><span id="line-195">                                                                           T qualified)</span>
 <span class="source-line-no">196</span><span id="line-196">    implements Qualified&lt;K, V, T&gt; {</span>
 <span class="source-line-no">197</span><span id="line-197"></span>
 <span class="source-line-no">198</span><span id="line-198"></span>
