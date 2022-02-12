@@ -60,7 +60,7 @@ import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
  * @see Constable
  */
 @Experimental
-public interface Qualified<K extends Constable & Comparable<K>, V extends Constable, T> extends Constable {
+public interface Qualified<K extends Comparable<? super K>, V, T> extends Constable {
 
 
   /*
@@ -191,8 +191,8 @@ public interface Qualified<K extends Constable & Comparable<K>, V extends Consta
    * @author <a href="https://about.me/lairdnelson"
    * target="_parent">Laird Nelson</a>
    */
-  public static final record Record<K extends Constable & Comparable<K>, V extends Constable, T>(Qualifiers<K, V> qualifiers,
-                                                                                                 T qualified)
+  public static final record Record<K extends Comparable<? super K>, V, T>(Qualifiers<K, V> qualifiers,
+                                                                           T qualified)
     implements Qualified<K, V, T> {
 
 
