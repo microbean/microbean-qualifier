@@ -26,30 +26,19 @@ import java.lang.constant.MethodTypeDesc;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.Spliterator;
 import java.util.TreeMap;
 
 import java.util.function.Function;
 import java.util.function.Predicate;
-
-import java.util.stream.Stream;
 
 import static java.lang.constant.ConstantDescs.BSM_INVOKE;
 import static java.lang.constant.ConstantDescs.CD_Object;
 import static java.lang.constant.ConstantDescs.DEFAULT_NAME;
 import static java.lang.constant.ConstantDescs.NULL;
 import static java.lang.constant.DirectMethodHandleDesc.Kind.STATIC;
-
-import static java.util.Collections.emptySortedMap;
-import static java.util.Collections.unmodifiableSortedMap;
 
 import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
 
@@ -88,7 +77,7 @@ import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
  *
  * @see #of(Comparable, Object)
  */
-public final class Qualifiers<K extends Comparable<? super K>, V> implements Constable, Iterable<Entry<K, V>> {
+public final class Qualifiers<K extends Comparable<? super K>, V> extends Bindings<K, V> {
 
 
   /*
@@ -97,14 +86,6 @@ public final class Qualifiers<K extends Comparable<? super K>, V> implements Con
 
 
   private static final Qualifiers<?, ?> EMPTY_QUALIFIERS = new Qualifiers<>();
-
-
-  /*
-   * Instance fields.
-   */
-
-
-  private final SortedMap<K, V> qualifiers;
 
 
   /*
@@ -117,7 +98,7 @@ public final class Qualifiers<K extends Comparable<? super K>, V> implements Con
    * Qualifiers}.
    */
   public Qualifiers() {
-    this(Map.of(), false);
+    super(Map.of(), Map.of(), false);
   }
 
   /**
@@ -128,18 +109,29 @@ public final class Qualifiers<K extends Comparable<? super K>, V> implements Con
    * <code>Map</code>} will be used instead
    */
   public Qualifiers(final Map<? extends K, ? extends V> qualifiers) {
-    this(qualifiers, true);
+    super(qualifiers, Map.of(), true);
   }
 
-  @SuppressWarnings("unchecked")
-  private Qualifiers(final Map<? extends K, ? extends V> qualifiers, final boolean copy) {
-    if (qualifiers == null || qualifiers.isEmpty()) {
-      this.qualifiers = emptySortedMap();
-    } else if (copy || !(qualifiers instanceof SortedMap)) {
-      this.qualifiers = unmodifiableSortedMap(new TreeMap<>(qualifiers));
-    } else {
-      this.qualifiers = unmodifiableSortedMap((SortedMap<K, V>)qualifiers);
-    }
+  /**
+   * Creates a new {@link Qualifiers}.
+   *
+   * @param qualifiers a {@link Map} representing the qualifiers; may be
+   * {@code null} in which case an {@linkplain Map#isEmpty() empty
+   * <code>Map</code>} will be used instead
+   *
+   * @param info informational key-value pairs; may be {@code
+   * null} in which case an {@linkplain Map#isEmpty() empty
+   * <code>Map</code>} will be used instead
+   */
+  public Qualifiers(final Map<? extends K, ? extends V> qualifiers,
+                    final Map<? extends K, ? extends V> info) {
+    super(qualifiers, info, true);
+  }
+
+  private Qualifiers(final Map<? extends K, ? extends V> qualifiers,
+                     final Map<? extends K, ? extends V> info,
+                     final boolean copy) {
+    super(qualifiers, info, copy);
   }
 
 
@@ -149,314 +141,17 @@ public final class Qualifiers<K extends Comparable<? super K>, V> implements Con
 
 
   /**
-   * Returns {@code true} if this {@link Qualifiers} is logically empty.
-   *
-   * @return {@code true} if this {@link Qualifiers} is logically
-   * empty
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   *
-   * @see #size()
-   */
-  public final boolean isEmpty() {
-    return this.toMap().isEmpty();
-  }
-
-  /**
-   * Returns {@code 0} or a positive integer describing the number of
-   * entries contained by this {@link Qualifiers}.
-   *
-   * @return the size of this {@link Qualifiers}
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   */
-  public final int size() {
-    return this.toMap().size();
-  }
-
-  /**
-   * Returns a non-{@code null}, immutable {@link Iterator} of {@link
-   * Entry} instances contained by this {@link Qualifiers}.
-   *
-   * @return a non-{@code null}, immutable {@link Iterator} of {@link
-   * Entry} instances contained by this {@link Qualifiers}
-   *
-   * @nullability This method never returns {@code null}.
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   */
-  @Override // Iterable<K, V>
-  public final Iterator<Entry<K, V>> iterator() {
-    return this.toMap().entrySet().iterator();
-  }
-
-  /**
-   * Returns a non-{@code null}, immutable {@link Spliterator} of
-   * {@link Entry} instances contained by this {@link Qualifiers}.
-   *
-   * @return a non-{@code null}, immutable {@link Spliterator} of
-   * {@link Entry} instances contained by this {@link Qualifiers}
-   *
-   * @nullability This method never returns {@code null}.
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   */
-  @Override // Iterable<K, V>
-  public final Spliterator<Entry<K, V>> spliterator() {
-    return this.toMap().entrySet().spliterator();
-  }
-
-  /**
-   * Returns a possibly parallel {@link Stream} of this {@link
-   * Qualifiers}' {@linkplain Entry entries}.
-   *
-   * @return a possibly parallel {@link Stream} of this {@link
-   * Qualifiers}' {@linkplain Entry entries}
-   *
-   * @nullability This method never returns {@code null}.
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   */
-  public final Stream<Entry<K, V>> parallelStream() {
-    return this.toMap().entrySet().parallelStream();
-  }
-
-  /**
-   * Returns a possibly parallel {@link Stream} of this {@link
-   * Qualifiers}' {@linkplain Entry entries}.
-   *
-   * @return a possibly parallel {@link Stream} of this {@link
-   * Qualifiers}' {@linkplain Entry entries}
-   *
-   * @nullability This method never returns {@code null}.
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   */
-  public final Stream<Entry<K, V>> stream() {
-    return this.toMap().entrySet().stream();
-  }
-
-  /**
-   * Returns {@code true} if this {@link Qualifiers} logically
-   * contains the supplied {@link Qualifiers}.
-   *
-   * <p>A {@link Qualifiers} is said to contain another {@link
-   * Qualifiers} if either:</p>
-   *
-   * <ul>
-   *
-   * <li>the two {@link Qualifiers} instances are identical, or</li>
-   *
-   * <li>the {@linkplain Map#size() size} of the first {@link Qualifiers}
-   * is greater than the {@linkplain Map#size() size} of the second
-   * {@link Qualifiers}, and the {@linkplain Map#entrySet() entry set}
-   * of this {@link Qualifiers} {@linkplain
-   * Set#containsAll(java.util.Collection) contains all} of the
-   * entries in the second {@link Qualifiers}' {@linkplain
-   * Map#entrySet() entry set}</li>
-   *
-   * </ul>
-   *
-   * @param other the {@link Qualifiers} to test; must not be {@code
-   * null}
-   *
-   * @return {@code true} if this {@link Qualifiers} logically
-   * contains the supplied {@link Qualifiers}
-   *
-   * @exception NullPointerException if {@code other} is {@code null}
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   *
-   * @see Map#size()
-   *
-   * @see Set#containsAll(java.util.Collection)
-   */
-  public final boolean contains(final Qualifiers<?, ?> other) {
-    return this == other || this.size() >= other.size() && this.toMap().entrySet().containsAll(other.toMap().entrySet());
-  }
-
-  /**
-   * Returns {@code true} if and only if this {@link Qualifiers}
-   * logically contains an entry equal to the supplied {@link Entry}.
-   *
-   * @param e the {@link Entry} to test; may be {@code null} in which
-   * case {@code false} will be returned
-   *
-   * @return {@code true} if and only if this {@link Qualifiers}
-   * logically contains an entry equal to the supplied {@link Entry}
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   */
-  public final boolean contains(final Entry<?, ?> e) {
-    final Object v = e == null ? null : this.toMap().get(e.getKey());
-    return v != null && v.equals(e.getValue());
-  }
-
-  /**
-   * Returns {@code true} if and only if this {@link Qualifiers}
-   * logically contains a key equal to the supplied {@code key}.
-   *
-   * @param key the key in question; may be {@code null} in which case
-   * {@code false} will be returned
-   *
-   * @return {@code true} if and only if this {@link Qualifiers}
-   * logically contains a key equal to the supplied {@code key}
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   */
-  public final boolean containsKey(final Object key) {
-    return key != null && this.toMap().containsKey(key);
-  }
-
-  /**
-   * Returns the value indexed under the supplied {@code key}, or
-   * {@code null} if there is no such value.
-   *
-   * @param key the key in question; may be {@code null} in which case
-   * {@code false} will be returned
-   *
-   * @return the value indexed under the supplied {@code key}, or
-   * {@code null} if there is no such value
-   *
-   * @nullability This method may return {@code null}.
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   */
-  public final V get(final Object key) {
-    return key == null ? null : this.toMap().get(key);
-  }
-
-  /**
-   * Returns {@code true} if and only if this {@link Qualifiers} is a
-   * subset of the supplied {@link Qualifiers}.
-   *
-   * @param other the other {@link Qualifiers}; must not be {@code
-   * null}
-   *
-   * @return {@code true} if and only if this {@link Qualifiers} is a
-   * subset of the supplied {@link Qualifiers}
-   *
-   * @exception NullPointerException if {@code other} is {@code null}
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   */
-  public final boolean isSubsetOf(final Qualifiers<?, ?> other) {
-    return other == this || other.contains(this);
-  }
-
-  /**
-   * Returns the number of entries this {@link Qualifiers} has in
-   * common with the supplied {@link Qualifiers}.
-   *
-   * <p>The number returned will be {@code 0} or greater.</p>
-   *
-   * @param other the other {@link Qualifiers}; may be {@code null} in
-   * which case {@code 0} will be returned
-   *
-   * @return the number of entries this {@link Qualifiers} has in
-   * common with the supplied {@link Qualifiers}
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   */
-  public final int intersectionSize(final Qualifiers<?, ?> other) {
-    if (other == this) {
-      // Just an identity check to rule this easy case out.
-      return this.size();
-    } else if (other == null || other.isEmpty()) {
-      return 0;
-    } else {
-      final Collection<? extends Entry<?, ?>> otherEntrySet = other.toMap().entrySet();
-      return (int)this.toMap().entrySet()
-        .stream()
-        .filter(otherEntrySet::contains)
-        .count();
-    }
-  }
-
-  /**
-   * Returns the size of the <em>symmetric difference</em> between
-   * this {@link Qualifiers} and the supplied {@link Qualifiers}.
-   *
-   * <p>The number returned is always {@code 0} or greater.</p>
-   *
-   * <p>The size of the symmetric difference between two {@link
-   * Qualifiers} instances is the number of qualifier entries that are
-   * in one {@link Qualifiers} instance but not in the other.</p>
-   *
-   * @param other the other {@link Qualifiers} instance; may be {@code
-   * null}
-   *
-   * @return the size of the <em>symmetric difference</em> between
-   * this {@link Qualifiers} and the supplied {@link Qualifiers};
-   * always {@code 0} or greater
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   */
-  public final int symmetricDifferenceSize(final Qualifiers<?, ?> other) {
-    if (other == this) {
-      // Just an identity check to rule this easy case out.
-      return 0;
-    } else if (other == null || other.isEmpty()) {
-      return this.size();
-    } else if (this.equals(other)) {
-      return 0;
-    } else {
-      final Collection<Entry<?, ?>> otherSymmetricDifference = new HashSet<>(this.toMap().entrySet());
-      other.toMap()
-        .entrySet()
-        .stream()
-        .filter(Predicate.not(otherSymmetricDifference::add))
-        .forEach(otherSymmetricDifference::remove);
-      return otherSymmetricDifference.size();
-    }
-  }
-
-  /**
    * Returns an {@link Optional} containing a {@link ConstantDesc}
-   * representing this {@link Qualifiers}.
+   * representing this {@link Qualifiers}, or an {@linkplain
+   * Optional#isEmpty() empty} {@link Optional} if any of this {@link
+   * Qualifiers}' keys or values is neither a {@link Constable} nor a
+   * {@link ConstantDesc}.
+   *
+   * <p><strong>Note:</strong> Only entries that are binding are
+   * described.</p>
    *
    * @return an {@link Optional} containing a {@link ConstantDesc}
-   * representing this {@link Qualifiers}; never {@code null}; never
-   * {@linkplain Optional#isEmpty() empty}
+   * representing this {@link Qualifiers}; never {@code null}
    *
    * @nullability This method never returns {@code null}.
    *
@@ -469,6 +164,7 @@ public final class Qualifiers<K extends Comparable<? super K>, V> implements Con
   public final Optional<? extends ConstantDesc> describeConstable() {
     final Collection<Entry<K, V>> entrySet = this.toMap().entrySet();
     if (entrySet.isEmpty()) {
+      // Rehydrate via Qualifiers.of()
       return
         Optional.of(DynamicConstantDesc.ofNamed(BSM_INVOKE,
                                                 DEFAULT_NAME,
@@ -477,109 +173,45 @@ public final class Qualifiers<K extends Comparable<? super K>, V> implements Con
                                                                           CD_Qualifiers,
                                                                           "of",
                                                                           MethodTypeDesc.of(CD_Qualifiers))));
-    } else {
-      final int bsmInvokeArgumentsLength = 2 * entrySet.size() + 1;
-      final ConstantDesc[] bsmInvokeArguments = new ConstantDesc[bsmInvokeArgumentsLength];
-      bsmInvokeArguments[0] =
-        MethodHandleDesc.ofMethod(STATIC,
-                                  CD_Qualifiers,
-                                  "of",
-                                  MethodTypeDesc.of(CD_Qualifiers,
-                                                    CD_Object.arrayType()));
-      int i = 1;
-      for (final Entry<K, V> entry : entrySet) {
-        final ConstantDesc k;
-        final Object key = entry.getKey();
-        if (key instanceof Constable ck) {
-          k = ck.describeConstable().orElse(null);
-        } else if (key instanceof ConstantDesc cd) {
-          k = cd;
-        } else {
-          return Optional.empty();
-        }
-        bsmInvokeArguments[i++] = k;
-        final ConstantDesc v;
-        final Object value = entry.getValue();
-        if (value == null){
-          v = NULL;
-        } else if (value instanceof Constable cv) {
-          v = cv.describeConstable().orElse(null);
-        } else if (value instanceof ConstantDesc cd) {
-          v = cd;
-        } else {
-          return Optional.empty();
-        }
-        bsmInvokeArguments[i++] = v;
+    }
+    final int bsmInvokeArgumentsLength = 2 * entrySet.size() + 1;
+    final ConstantDesc[] bsmInvokeArguments = new ConstantDesc[bsmInvokeArgumentsLength];
+    // Rehydrate via Qualifiers.of(Object...)
+    bsmInvokeArguments[0] =
+      MethodHandleDesc.ofMethod(STATIC,
+                                CD_Qualifiers,
+                                "of",
+                                MethodTypeDesc.of(CD_Qualifiers,
+                                                  CD_Object.arrayType()));
+    int i = 1;
+    for (final Entry<K, V> entry : entrySet) {
+      final ConstantDesc k;
+      final Object key = entry.getKey();
+      if (key instanceof Constable ck) {
+        k = ck.describeConstable().orElse(null);
+      } else if (key instanceof ConstantDesc cd) {
+        k = cd;
+      } else {
+        return Optional.empty();
       }
-      return Optional.of(DynamicConstantDesc.ofNamed(BSM_INVOKE,
-                                                     DEFAULT_NAME,
-                                                     CD_Qualifiers,
-                                                     bsmInvokeArguments));
+      bsmInvokeArguments[i++] = k;
+      final ConstantDesc v;
+      final Object value = entry.getValue();
+      if (value == null){
+        v = NULL;
+      } else if (value instanceof Constable cv) {
+        v = cv.describeConstable().orElse(null);
+      } else if (value instanceof ConstantDesc cd) {
+        v = cd;
+      } else {
+        return Optional.empty();
+      }
+      bsmInvokeArguments[i++] = v;
     }
-  }
-
-  /**
-   * Returns a hashcode for this {@link Qualifiers}.
-   *
-   * @return a hashcode for this {@link Qualifiers}
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   *
-   * @see Object#hashCode()
-   */
-  @Override // Object
-  public final int hashCode() {
-    return this.toMap().hashCode();
-  }
-
-  /**
-   * Returns {@code true} if this {@link Qualifiers} is equal to the
-   * supplied {@link Object}.
-   *
-   * @param other the object to test; may be {@code null} in which
-   * case {@code false} will be returned
-   *
-   * @return {@code true} if this {@link Qualifiers} is equal to the
-   * supplied {@link Object}; {@code false} otherwise
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe  for concurrent use by multiple
-   * threads.
-   */
-  @Override // Object
-  public final boolean equals(final Object other) {
-    if (other == this) {
-      return true;
-    } else if (other != null && other.getClass() == this.getClass()) {
-      final Qualifiers<?, ?> her = (Qualifiers<?, ?>)other;
-      return
-        Objects.equals(this.toMap(), her.toMap());
-    } else {
-      return false;
-    }
-  }
-
-  /**
-   * Returns a non-{@code null} {@link String} representation of this
-   * {@link Qualifiers}.
-   *
-   * @return a non-{@code null} {@link String} representation of this
-   * {@link Qualifiers}
-   *
-   * @nullability This method never returns {@code null}.
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe  for concurrent use by multiple
-   * threads.
-   */
-  @Override // Object
-  public final String toString() {
-    return this.toMap().toString();
+    return Optional.of(DynamicConstantDesc.ofNamed(BSM_INVOKE,
+                                                   DEFAULT_NAME,
+                                                   CD_Qualifiers,
+                                                   bsmInvokeArguments));
   }
 
   /**
@@ -615,11 +247,21 @@ public final class Qualifiers<K extends Comparable<? super K>, V> implements Con
     if (f == null || this.isEmpty()) {
       return this;
     } else {
-      final Map<K, V> map = new TreeMap<>();
+      final Map<K, V> bindings = new TreeMap<>();
       for (final Entry<? extends K, ? extends V> entry : this.toMap().entrySet()) {
-        map.put(f.apply(entry.getKey()), entry.getValue());
+        bindings.put(f.apply(entry.getKey()), entry.getValue());
       }
-      return new Qualifiers<>(map, false);
+      final Map<K, V> info;
+      final Map<K, V> myInfo = this.info();
+      if (myInfo.isEmpty()) {
+        info = Map.of();
+      } else {
+        info = new TreeMap<>();
+        for (final Entry<? extends K, ? extends V> entry : myInfo.entrySet()) {
+          info.put(f.apply(entry.getKey()), entry.getValue());
+        }
+      }
+      return new Qualifiers<K, V>(bindings, info, false);
     }
   }
 
@@ -655,7 +297,7 @@ public final class Qualifiers<K extends Comparable<? super K>, V> implements Con
     if (qualifiers == null || qualifiers.isEmpty()) {
       return this;
     } else {
-      return this.plus(qualifiers.toMap());
+      return this.plus(qualifiers.toMap(), qualifiers.info());
     }
   }
 
@@ -686,21 +328,31 @@ public final class Qualifiers<K extends Comparable<? super K>, V> implements Con
    * threads.
    */
   public final Qualifiers<K, V> plus(final Map<? extends K, ? extends V> qualifiers) {
-    if (qualifiers == null || qualifiers.isEmpty()) {
-      return this;
-    } else {
-      final Map<K, V> map = new TreeMap<>(this.toMap());
-      map.putAll(qualifiers);
-      return new Qualifiers<>(map, false);
-    }
+    return this.plus(qualifiers, Map.of());
   }
 
   /**
-   * Returns an immutable {@link Map} representation of this {@link
-   * Qualifiers}.
+   * Returns a {@link Qualifiers} with additional
+   * entries sourced from the supplied {@link Map}s.
    *
-   * @return an immutable {@link Map} representation of this {@link
-   * Qualifiers}
+   * <p>The returned {@link Qualifiers} <strong>will be new</strong>
+   * unless both {@link Map}s are {@code null} or {@linkplain
+   * Map#isEmpty() empty}, in which case {@code this} will be
+   * returned.</p>
+   *
+   * @param qualifiers a {@link Map} whose entries will be part of the
+   * new {@link Qualifiers}, displacing any that already exist; may be
+   * {@code null} or {@linkplain Map#isEmpty() empty} in which case an
+   * {@linkplain Map#isEmpty() empty <code>Map</code>} will be used
+   * instead; all keys and values must be immutable (not just
+   * unmodifiable) or undefined behavior will result
+   *
+   * @param info informational key-value pairs; may be {@code
+   * null} in which case an {@linkplain Map#isEmpty() empty
+   * <code>Map</code>} will be used instead
+   *
+   * @return a {@link Qualifiers} with additional entries sourced from
+   * the supplied {@link Map}s; never {@code null}
    *
    * @nullability This method never returns {@code null}.
    *
@@ -709,8 +361,27 @@ public final class Qualifiers<K extends Comparable<? super K>, V> implements Con
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public final Map<K, V> toMap() {
-    return this.qualifiers;
+  public final Qualifiers<K, V> plus(final Map<? extends K, ? extends V> qualifiers,
+                                     final Map<? extends K, ? extends V> info) {
+    if (qualifiers == null || qualifiers.isEmpty()) {
+      if (info == null || info.isEmpty()) {
+        return this;
+      } else {
+        final Map<K, V> newInfo = new TreeMap<>(this.info());
+        newInfo.putAll(info);
+        return new Qualifiers<>(this.toMap(), newInfo, false);
+      }      
+    } else if (info == null || info.isEmpty()) {
+      final Map<K, V> newQualifiers = new TreeMap<>(this.toMap());
+      newQualifiers.putAll(qualifiers);
+      return new Qualifiers<>(newQualifiers, this.info(), false);
+    } else {
+      final Map<K, V> newQualifiers = new TreeMap<>(this.toMap());
+      newQualifiers.putAll(qualifiers);
+      final Map<K, V> newInfo = new TreeMap<>(this.info());
+      newInfo.putAll(info);
+      return new Qualifiers<>(newQualifiers, newInfo, false);
+    }
   }
 
 
@@ -755,9 +426,43 @@ public final class Qualifiers<K extends Comparable<? super K>, V> implements Con
    * @param <V> the type borne by the values of the qualifiers in the
    * returned {@link Qualifiers}
    *
-   * @param map the {@link Map} of qualifier names and values; may be
-   * {@code null} in which case the return value of the {@link #of()}
-   * method will be returned
+   * @param bindings the {@link Map} of qualifier names and values;
+   * may be {@code null} in which case the return value of the {@link
+   * #of()} method will be returned
+   *
+   * @return a {@link Qualifiers} equal to one consisting of the
+   * entries represented by the supplied {@link Map}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see #of(Map, Map)
+   */
+  public static final <K extends Comparable<? super K>, V> Qualifiers<K, V> of(final Map<? extends K, ? extends V> bindings) {
+    return of(bindings, Map.of());
+  }
+
+  /**
+   * Returns a {@link Qualifiers} equal to one consisting of the
+   * entries represented by the supplied {@link Map}s.
+   *
+   * @param <K> the type borne by the keys of the qualifiers in the
+   * returned {@link Qualifiers}
+   *
+   * @param <V> the type borne by the values of the qualifiers in the
+   * returned {@link Qualifiers}
+   *
+   * @param bindings the {@link Map} of qualifier names and values;
+   * may be {@code null} in which case the return value of the {@link
+   * #of()} method will be returned
+   *
+   * @param info informational key-value pairs; may be {@code null} in
+   * which case an {@linkplain Map#isEmpty() empty <code>Map</code>}
+   * will be used instead
    *
    * @return a {@link Qualifiers} equal to one consisting of the
    * entries represented by the supplied {@link Map}
@@ -771,12 +476,18 @@ public final class Qualifiers<K extends Comparable<? super K>, V> implements Con
    *
    * @see #of(Comparable, Object)
    */
-  @SuppressWarnings("unchecked")
-  public static final <K extends Comparable<? super K>, V> Qualifiers<K, V> of(final Map<? extends K, ? extends V> map) {
-    if (map == null || map.isEmpty()) {
-      return of();
+  public static final <K extends Comparable<? super K>, V> Qualifiers<K, V> of(final Map<? extends K, ? extends V> bindings,
+                                                                               final Map<? extends K, ? extends V> info) {
+    if (bindings == null || bindings.isEmpty()) {
+      if (info == null || info.isEmpty()) {
+        return of();
+      } else {
+        return new Qualifiers<>(Map.of(), info, true);
+      }
+    } else if (info == null || info.isEmpty()) {
+      return new Qualifiers<>(bindings, Map.of(), true);
     } else {
-      return new Qualifiers<>((Map<K, V>)map);
+      return new Qualifiers<>(bindings, info, true);
     }
   }
 
@@ -810,7 +521,7 @@ public final class Qualifiers<K extends Comparable<? super K>, V> implements Con
    * threads.
    */
   public static final <K extends Comparable<? super K>, V> Qualifiers<K, V> of(final K name0, final V value0) {
-    return new Qualifiers<>(Map.of(name0, value0));
+    return new Qualifiers<>(Map.of(name0, value0), Map.of(), false);
   }
 
   /**
@@ -844,8 +555,8 @@ public final class Qualifiers<K extends Comparable<? super K>, V> implements Con
    * threads.
    */
   public static final <K extends Comparable<? super K>, V> Qualifiers<K, V> of(final K name0, final V value0,
-                                                                       final K name1, final V value1) {
-    return new Qualifiers<>(Map.of(name0, value0, name1, value1));
+                                                                               final K name1, final V value1) {
+    return new Qualifiers<>(Map.of(name0, value0, name1, value1), Map.of(), false);
   }
 
   /**
@@ -884,9 +595,9 @@ public final class Qualifiers<K extends Comparable<? super K>, V> implements Con
    * threads.
    */
   public static final <K extends Comparable<? super K>, V> Qualifiers<K, V> of(final K name0, final V value0,
-                                                                       final K name1, final V value1,
-                                                                       final K name2, final V value2) {
-    return new Qualifiers<>(Map.of(name0, value0, name1, value1, name2, value2));
+                                                                               final K name1, final V value1,
+                                                                               final K name2, final V value2) {
+    return new Qualifiers<>(Map.of(name0, value0, name1, value1, name2, value2), Map.of(), false);
   }
 
   /**
@@ -940,7 +651,7 @@ public final class Qualifiers<K extends Comparable<? super K>, V> implements Con
       for (int i = 0; i < nameValuePairs.length; i++) {
         map.put((K)nameValuePairs[i++], (V)nameValuePairs[i]);
       }
-      return new Qualifiers<>(map);
+      return new Qualifiers<>(map, Map.of(), false);
     }
   }
 

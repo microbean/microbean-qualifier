@@ -20,7 +20,7 @@ import java.lang.constant.ClassDesc;
 
 /**
  * A utility class containing useful {@link
- * java.lang.constant.ConstantDesc}s (mostly {@link ClassDesc}s).
+ * java.lang.constant.ConstantDesc}s.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
@@ -33,6 +33,14 @@ public final class ConstantDescs {
    */
 
 
+  /**
+   * A {@link ClassDesc} describing {@link Bindings
+   * org.microbean.qualifier.Bindings}.
+   *
+   * @nullability This field is never {@code null}.
+   */
+  public static final ClassDesc CD_Bindings = ClassDesc.of("org.microbean.qualifier.Bindings");
+
   static final ClassDesc CD_Constable = ClassDesc.of("java.lang.constant.Constable");
 
   /**
@@ -41,7 +49,7 @@ public final class ConstantDescs {
    *
    * @nullability This field is never {@code null}.
    */
-  public static final ClassDesc CD_Qualified = ClassDesc.of(Qualified.class.getName());
+  public static final ClassDesc CD_Qualified = ClassDesc.of("org.microbean.qualifier.Qualified");
 
   /**
    * A {@link ClassDesc} describing {@link Qualified.Record
@@ -49,14 +57,14 @@ public final class ConstantDescs {
    *
    * @nullability This field is never {@code null}.
    */
-  public static final ClassDesc CD_QualifiedRecord = ClassDesc.of(Qualified.Record.class.getName());
+  public static final ClassDesc CD_QualifiedRecord = ClassDesc.of("org.microbean.qualifier.Qualified$Record");
 
   /**
    * A {@link ClassDesc} describing {@link Qualifiers org.microbean.qualifier.Qualifiers}.
    *
    * @nullability This field is never {@code null}.
    */
-  public static final ClassDesc CD_Qualifiers = ClassDesc.of(Qualifiers.class.getName());
+  public static final ClassDesc CD_Qualifiers = ClassDesc.of("org.microbean.qualifier.Qualifiers");
 
 
   /*
