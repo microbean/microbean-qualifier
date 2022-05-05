@@ -22,18 +22,16 @@ import java.lang.constant.DynamicConstantDesc;
 import java.lang.constant.MethodHandleDesc;
 import java.lang.constant.MethodTypeDesc;
 
-import java.util.Objects;
 import java.util.Optional;
-
-import org.microbean.development.annotation.Experimental;
-import org.microbean.development.annotation.OverridingEncouraged;
 
 import static java.lang.constant.ConstantDescs.BSM_INVOKE;
 import static java.lang.constant.ConstantDescs.CD_Object;
 import static java.lang.constant.ConstantDescs.DEFAULT_NAME;
 import static java.lang.constant.ConstantDescs.NULL;
-import static java.lang.constant.DirectMethodHandleDesc.Kind.STATIC;
 
+import static java.lang.constant.DirectMethodHandleDesc.Kind.INTERFACE_STATIC;
+
+import static org.microbean.qualifier.ConstantDescs.CD_Qualified;
 import static org.microbean.qualifier.ConstantDescs.CD_QualifiedRecord;
 import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
 
@@ -59,7 +57,6 @@ import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
  *
  * @see Constable
  */
-@Experimental
 public interface Qualified<K extends Comparable<? super K>, V, T> extends Constable {
 
 
@@ -69,11 +66,9 @@ public interface Qualified<K extends Comparable<? super K>, V, T> extends Consta
 
 
   /**
-   * Returns the {@link Qualifiers} that qualifies this {@link
-   * Qualified}.
+   * Returns this {@link Qualified}'s {@link Qualifiers}.
    *
-   * @return the {@link Qualifiers} that qualifies this {@link
-   * Qualified}; never {@code null}
+   * @return this {@link Qualified}'s {@link Qualifiers}
    *
    * @nullability Implementations of this method must not return
    * {@code null}.
@@ -87,13 +82,12 @@ public interface Qualified<K extends Comparable<? super K>, V, T> extends Consta
   public Qualifiers<K, V> qualifiers();
 
   /**
-   * Returns the qualified thing this {@link Qualified} represents.
+   * Returns this {@link Qualified}'s qualified object.
    *
-   * @return the qualified thing this {@link Qualified} represents;
-   * possibly, but not normally, {@code null}
+   * @return this {@link Qualified}'s qualified object, which may be
+   * {@code null}
    *
-   * @nullability Implementations of this method may return {@code
-   * null}.
+   * @nullability Implementations of this method may return {@code null}.
    *
    * @idempotency Implementations of this method must be idempotent
    * and deterministic.
@@ -104,22 +98,19 @@ public interface Qualified<K extends Comparable<? super K>, V, T> extends Consta
   public T qualified();
 
   /**
-   * Returns an {@link Optional} containing the nominal descriptor for
-   * this instance, if one can be constructed, <strong>or an
-   * {@linkplain Optional#isEmpty() empty} {@link Optional} if one
-   * cannot be constructed</strong>.
+   * Returns an {@link Optional} housing a {@link ConstantDesc}
+   * describing this {@link Qualified}, if this {@link Qualified} is
+   * capable of being represented as a <a
+   * href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/package-summary.html#condycon">dynamic
+   * constant</a>, or an {@linkplain Optional#isEmpty() empty} {@link
+   * Optional} if not.
    *
-   * <p>The default implementation of this method returns an {@link
-   * Optional Optional&lt;? extends ConstantDesc&gt;} that is computed
-   * from only the return value of the {@link #qualifiers()} method
-   * and the return value of the {@link #qualified()} method.  This
-   * may or may not be sufficient for any given subclass'
-   * semantics.</p>
-   *
-   * @return an {@link Optional} containing the nominal descriptor for
-   * this instance, if one can be constructed, <strong>or an
-   * {@linkplain Optional#isEmpty() empty} {@link Optional} if one
-   * cannot be constructed</strong>; never {@code null}
+   * @return an {@link Optional} housing a {@link ConstantDesc}
+   * describing this {@link Qualified}, if this {@link Qualified} is
+   * capable of being represented as a <a
+   * href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/package-summary.html#condycon">dynamic
+   * constant</a>, or an {@linkplain Optional#isEmpty() empty} {@link
+   * Optional} if not
    *
    * @nullability This method does not, and its overrides must not,
    * return {@code null}.
@@ -129,36 +120,109 @@ public interface Qualified<K extends Comparable<? super K>, V, T> extends Consta
    *
    * @threadsafety This method is, and its overrides must be, safe for
    * concurrent use by multiple threads.
+   *
+   * @see <a
+   * href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/package-summary.html#condycon">Dynamically-computed
+   * constants</a>
    */
   @Override // Constable
-  @OverridingEncouraged
   public default Optional<? extends ConstantDesc> describeConstable() {
-    final ConstantDesc qualifiersDesc = this.qualifiers().describeConstable().orElse(null);
-    if (qualifiersDesc != null) {
-      final Object qualified = this.qualified();
-      final ConstantDesc qualifiedDesc;
-      if (qualified == null) {
-        qualifiedDesc = NULL;
-      } else if (qualified instanceof Constable cq) {
-        qualifiedDesc = cq.describeConstable().orElse(null);
-      } else if (qualified instanceof ConstantDesc cd) {
-        qualifiedDesc = cd;
-      } else {
-        qualifiedDesc = null;
-      }
-      if (qualifiedDesc != null) {
-        return
-          Optional.of(DynamicConstantDesc.ofNamed(BSM_INVOKE,
-                                                  DEFAULT_NAME,
-                                                  CD_QualifiedRecord,
-                                                  MethodHandleDesc.ofConstructor(CD_QualifiedRecord,
-                                                                                 CD_Qualifiers,
-                                                                                 CD_Object),
-                                                  qualifiersDesc,
-                                                  qualifiedDesc));
-      }
+    final T qualified = this.qualified();
+    final ConstantDesc qualifiedCd;
+    if (qualified == null) {
+      qualifiedCd = NULL;
+    } else if (qualified instanceof Constable c) {
+      qualifiedCd = c.describeConstable().orElse(null);
+    } else if (qualified instanceof ConstantDesc cd) {
+      qualifiedCd = cd;
+    } else {
+      return Optional.empty();
     }
-    return Optional.empty();
+    final ConstantDesc qualifiersCd = this.qualifiers().describeConstable().orElse(null);
+    if (qualifiersCd == null) {
+      return Optional.empty();
+    }
+    // Call Qualified.of(qualifiers, qualified) to rehydrate.
+    return
+      Optional.of(DynamicConstantDesc.ofNamed(BSM_INVOKE,
+                                              DEFAULT_NAME,
+                                              CD_Qualified,
+                                              MethodHandleDesc.ofMethod(INTERFACE_STATIC,
+                                                                        CD_Qualified,
+                                                                        "of",
+                                                                        MethodTypeDesc.of(CD_Qualified,
+                                                                                          CD_Qualifiers,
+                                                                                          CD_Object)),
+                                              qualifiersCd,
+                                              qualifiedCd));
+  }
+
+
+  /*
+   * Static methods.
+   */
+
+
+  /**
+   * Returns a {@link Qualified}, which may or may not be newly
+   * created, representing the supplied qualified object.
+   *
+   * @param <K> the type of the {@link Qualified}'s {@link
+   * Qualifiers}' {@linkplain Binding#attributes() attribute keys}
+   *
+   * @param <V> the type of the {@link Qualified}'s {@link
+   * Qualifiers}' {@linkplain Binding#value() value} and {@linkplain
+   * Binding#attributes() attribute values}
+   *
+   * @param <T> the type of the qualified object
+   *
+   * @param qualified the qualified object; may be {@code null}
+   *
+   * @return a {@link Qualified}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is neither idempotent nor deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see #of(Qualifiers, Object)
+   */
+  public static <K extends Comparable<? super K>, V, T> Qualified<K, V, T> of(final T qualified) {
+    return Record.of(qualified);
+  }
+
+  /**
+   * Returns a {@link Qualified}, which may or may not be newly
+   * created, representing the supplied {@link Qualifiers} and
+   * qualified object.
+   *
+   * @param <K> the type of the {@link Qualified}'s {@link
+   * Qualifiers}' {@linkplain Binding#attributes() attribute keys}
+   *
+   * @param <V> the type of the {@link Qualified}'s {@link
+   * Qualifiers}' {@linkplain Binding#value() value} and {@linkplain
+   * Binding#attributes() attribute values}
+   *
+   * @param <T> the type of the qualified object
+   *
+   * @param qualifiers the {@link Qualifiers}; may be {@code null}
+   *
+   * @param qualified the qualified object; may be {@code null}
+   *
+   * @return a {@link Qualified}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is neither idempotent nor deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  // Called by #describeConstable().
+  public static <K extends Comparable<? super K>, V, T> Qualified<K, V, T> of(final Qualifiers<K, V> qualifiers, final T qualified) {
+    return Record.of(qualifiers, qualified);
   }
 
 
@@ -191,15 +255,26 @@ public interface Qualified<K extends Comparable<? super K>, V, T> extends Consta
    * @author <a href="https://about.me/lairdnelson"
    * target="_parent">Laird Nelson</a>
    */
-  public static final record Record<K extends Comparable<? super K>, V, T>(Qualifiers<K, V> qualifiers,
-                                                                           T qualified)
-    implements Qualified<K, V, T> {
+  public static final record Record<K extends Comparable<? super K>, V, T>(Qualifiers<K, V> qualifiers, T qualified)
+    implements Qualified<K, V, T>, Constable {
 
 
     /*
-     * Canonical constructor.
+     * Constructors.
      */
 
+
+    /**
+     * Creates a new {@link Record}.
+     *
+     * @param qualified the object being qualified; may be {@code
+     * null}
+     *
+     * @see #Record(Qualifiers, Object)
+     */
+    public Record(final T qualified) {
+      this(Qualifiers.of(), qualified);
+    }
 
     /**
      * Creates a new {@link Record}.
@@ -216,6 +291,113 @@ public interface Qualified<K extends Comparable<? super K>, V, T> extends Consta
         qualifiers = Qualifiers.of();
       }
     }
+
+
+    /*
+     * Instance methods.
+     */
+
+
+    /**
+     * Returns an {@link Optional} housing a {@link ConstantDesc}
+     * describing this {@link Record}, if this {@link Record} is
+     * capable of being represented as a <a
+     * href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/package-summary.html#condycon">dynamic
+     * constant</a>, or an {@linkplain Optional#isEmpty() empty}
+     * {@link Optional} if not.
+     *
+     * @return an {@link Optional} housing a {@link ConstantDesc}
+     * describing this {@link Record}, if this {@link Record} is
+     * capable of being represented as a <a
+     * href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/package-summary.html#condycon">dynamic
+     * constant</a>, or an {@linkplain Optional#isEmpty() empty}
+     * {@link Optional} if not
+     *
+     * @nullability This method does not, and its overrides must not,
+     * return {@code null}.
+     *
+     * @idempotency This method is, and its overrides must be,
+     * idempotent and deterministic.
+     *
+     * @threadsafety This method is, and its overrides must be, safe
+     * for concurrent use by multiple threads.
+     *
+     * @see <a
+     * href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/package-summary.html#condycon">Dynamically-computed
+     * constants</a>
+     */
+    @Override // Constable
+    public final Optional<? extends ConstantDesc> describeConstable() {
+      return Qualified.super.describeConstable();
+    }
+
+
+    /*
+     * Static methods.
+     */
+
+
+    /**
+     * Returns a {@link Record}, which may or may not be newly
+     * created, representing the qualified object.
+     *
+     * @param <K> the type of the {@link Record}'s {@link Qualifiers}'
+     * {@linkplain Binding#attributes() attribute keys}
+     *
+     * @param <V> the type of the {@link Record}'s {@link Qualifiers}'
+     * {@linkplain Binding#value() value} and {@linkplain
+     * Binding#attributes() attribute values}
+     *
+     * @param <T> the type of the qualified object
+     *
+     * @param qualified the qualified object; may be {@code null}
+     *
+     * @return a {@link Record}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is neither idempotent nor deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by multiple
+     * threads.
+     *
+     * @see #of(Qualifiers, Object)
+     */
+    public static final <K extends Comparable<? super K>, V, T> Record<K, V, T> of(final T qualified) {
+      return of(Qualifiers.<K, V>of(), qualified);
+    }
+
+    /**
+     * Returns a {@link Record}, which may or may not be newly
+     * created, representing the supplied {@link Qualifiers} and
+     * qualified object.
+     *
+     * @param <K> the type of the {@link Record}'s {@link Qualifiers}'
+     * {@linkplain Binding#attributes() attribute keys}
+     *
+     * @param <V> the type of the {@link Record}'s {@link Qualifiers}'
+     * {@linkplain Binding#value() value} and {@linkplain
+     * Binding#attributes() attribute values}
+     *
+     * @param <T> the type of the qualified object
+     *
+     * @param qualifiers the {@link Qualifiers}; may be {@code null}
+     *
+     * @param qualified the qualified object; may be {@code null}
+     *
+     * @return a {@link Record}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is neither idempotent nor deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by multiple
+     * threads.
+     */
+    public static final <K extends Comparable<? super K>, V, T> Record<K, V, T> of(final Qualifiers<K, V> qualifiers, final T qualified) {
+      return new Record<>(qualifiers, qualified);
+    }
+
 
   }
 
