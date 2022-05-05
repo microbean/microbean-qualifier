@@ -16,59 +16,52 @@
  */
 package org.microbean.qualifier;
 
+import java.lang.constant.ClassDesc;
 import java.lang.constant.Constable;
+import java.lang.constant.ConstantDesc;
+import java.lang.constant.DynamicConstantDesc;
+import java.lang.constant.MethodHandleDesc;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.SortedMap;
+import java.util.Optional;
+import java.util.Set;
+import java.util.SortedSet;
 import java.util.Spliterator;
-import java.util.TreeMap;
+import java.util.TreeSet;
 
 import java.util.function.Predicate;
 
 import java.util.stream.Stream;
 
-import static java.util.Collections.emptySortedMap;
-import static java.util.Collections.unmodifiableSortedMap;
+import org.microbean.constant.Constables;
+
+import static java.lang.constant.ConstantDescs.BSM_INVOKE;
+import static java.lang.constant.ConstantDescs.CD_Collection;
+
+import static java.util.Collections.emptySortedSet;
+import static java.util.Collections.unmodifiableSortedSet;
+
+import static org.microbean.qualifier.ConstantDescs.CD_Iterable;
 
 /**
- * An {@code abstract}, {@link Constable}, immutable, sorted set of
- * key-value pairs that can be used to further refine an object for
- * many different purposes.
+ * An abstract, immutable {@linkplain Iterable iterable} collection of
+ * {@link Binding} instances.
  *
- * <p>Keys are sorted according to their natural order.</p>
+ * @param <K> the type of a {@link Binding}'s {@linkplain
+ * Binding#attributes() attribute keys}
  *
- * <p>This is a <a
- * href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/doc-files/ValueBased.html">value-based
- * class</a>.</p>
+ * @param <V> the type of a {@link Binding}'s {@linkplain
+ * Binding#attributes() attribute values}
  *
- * <p>Values of type {@code K} must be members of classes adhering to
- * <a
- * href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/doc-files/ValueBased.html">value-based
- * semantics</a>.</p>
- *
- * <p>Values of type {@code V} must be members of classes adhering to
- * <a
- * href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/doc-files/ValueBased.html">value-based
- * semantics</a>.</p>
- *
- * <p>Undefined behavior will result if the preceding requirements are
- * not honored.</p>
- *
- * @param <K> the type borne by the keys of the entries in this
- * {@link Bindings}
- *
- * @param <V> the type borne by the values of the entries in this
- * {@link Bindings}
+ * @param <B> The concrete subtype of this class
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  */
-public abstract class Bindings<K extends Comparable<? super K>, V> implements Constable, Iterable<Entry<K, V>> {
+public abstract class Bindings<K extends Comparable<? super K>, V, B extends Binding<K, V, B>> implements Constable, Iterable<B> {
 
 
   /*
@@ -76,9 +69,7 @@ public abstract class Bindings<K extends Comparable<? super K>, V> implements Co
    */
 
 
-  private final SortedMap<K, V> bindings;
-
-  private final SortedMap<K, V> info;
+  private final SortedSet<B> bindings;
 
 
   /*
@@ -89,82 +80,36 @@ public abstract class Bindings<K extends Comparable<? super K>, V> implements Co
   /**
    * Creates a new {@link Bindings}.
    *
-   * @param bindings a {@link Map} representing the bindings to be
-   * modeled by this {@link Bindings}; may be {@code null} in which
-   * case an {@linkplain Map#isEmpty() empty <code>Map</code>} will be
-   * used instead
+   * <p>Duplicate {@link Binding} instances contained by the supplied
+   * {@link Iterable} will be discarded.</p>
    *
-   * @param info informational key-value pairs; may be {@code
-   * null} in which case an {@linkplain Map#isEmpty() empty
-   * <code>Map</code>} will be used instead
-   *
-   * @param copy if {@code false}, the supplied {@link Map}s will not
-   * be copied and will be stored by reference; it is recommended to
-   * supply {@code true} for this parameter in all but the most
-   * specific circumstances
+   * @param bindings the {@link Binding} instances that will be
+   * contained by this {@link Bindings}
    */
-  @SuppressWarnings("unchecked")
-  protected Bindings(final Map<? extends K, ? extends V> bindings,
-                     final Map<? extends K, ? extends V> info,
-                     final boolean copy) {
+  protected Bindings(final Iterable<? extends B> bindings) {
     super();
-    if (bindings == null || bindings.isEmpty()) {
-      this.bindings = emptySortedMap();
-    } else if (copy || !(bindings instanceof SortedMap)) {
-      this.bindings = unmodifiableSortedMap(new TreeMap<>(bindings));
+    if (bindings == null) {
+      this.bindings = emptySortedSet();
     } else {
-      this.bindings = unmodifiableSortedMap((SortedMap<K, V>)bindings);
-    }
-    if (info == null || info.isEmpty()) {
-      this.info = emptySortedMap();
-    } else {
-      final TreeMap<K, V> map = new TreeMap<>();
-      for (final K key : info.keySet()) {
-        if (!this.bindings.containsKey(key)) {
-          map.put(key, info.get(key));
+      final Iterator<? extends B> i = bindings.iterator();
+      if (i.hasNext()) {
+        final SortedSet<B> newBindings = new TreeSet<>();
+        newBindings.add(i.next());
+        while (i.hasNext()) {
+          newBindings.add(i.next());
         }
+        this.bindings = unmodifiableSortedSet(newBindings);
+      } else {
+        this.bindings = emptySortedSet();
       }
-      this.info = unmodifiableSortedMap(map);
     }
   }
 
-  /**
-   * Returns an immutable {@link Map} representation of this {@link
-   * Bindings}.
-   *
-   * @return an immutable {@link Map} representation of this {@link
-   * Bindings}
-   *
-   * @nullability This method never returns {@code null}.
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   */
-  public final Map<K, V> toMap() {
-    return this.bindings;
-  }
 
-  /**
-   * Returns an immutable {@link Map} representation of the
-   * informational {@link Map} {@linkplain #Bindings(Map, Map,
-   * boolean) supplied at construction time}.
-   *
-   * @return an immutable {@link Map} representation of the
-   * informational {@link Map} {@linkplain #Bindings(Map, Map,
-   * boolean) supplied at construction time}
-   *
-   * @nullability This method never returns {@code null}.
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
+  /*
+   * Instance methods.
    */
-  public final Map<K, V> info() {
-    return this.info;
-  }
+
 
   /**
    * Returns {@code true} if this {@link Bindings} is logically empty.
@@ -179,7 +124,7 @@ public abstract class Bindings<K extends Comparable<? super K>, V> implements Co
    * @see #size()
    */
   public final boolean isEmpty() {
-    return this.toMap().isEmpty();
+    return this.bindings.isEmpty();
   }
 
   /**
@@ -194,174 +139,54 @@ public abstract class Bindings<K extends Comparable<? super K>, V> implements Co
    * threads.
    */
   public final int size() {
-    return this.toMap().size();
+    return this.bindings.size();
   }
 
   /**
-   * Returns a non-{@code null}, immutable {@link Iterator} of {@link
-   * Entry} instances contained by this {@link Bindings}.
+   * Returns the sole {@link Binding} {@linkplain Binding#value()
+   * value} whose {@linkplain Binding#name() name} {@linkplain
+   * String#equals(Object) is equal to} the supplied {@code name}, or
+   * {@code null} if either there is no such {@link Binding} or there
+   * are several {@link Binding}s with the supplied {@code name}.
    *
-   * @return a non-{@code null}, immutable {@link Iterator} of {@link
-   * Entry} instances contained by this {@link Bindings}
+   * @param name the name; may be {@code null} in which case {@code
+   * false} will be returned
    *
-   * @nullability This method never returns {@code null}.
+   * @return the sole {@link Binding} {@linkplain Binding#value()
+   * value} whose {@linkplain Binding#name() name} {@linkplain
+   * String#equals(Object) is equal to} the supplied {@code name}, or
+   * {@code null} if either there is no such {@link Binding} or there
+   * are several {@link Binding}s with the supplied {@code name}.
    *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   */
-  @Override // Iterable<K, V>
-  public final Iterator<Entry<K, V>> iterator() {
-    return this.toMap().entrySet().iterator();
-  }
-
-
-  /**
-   * Returns a non-{@code null}, immutable {@link Spliterator} of
-   * {@link Entry} instances contained by this {@link Bindings}.
-   *
-   * @return a non-{@code null}, immutable {@link Spliterator} of
-   * {@link Entry} instances contained by this {@link Bindings}
-   *
-   * @nullability This method never returns {@code null}.
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   */
-  @Override // Iterable<K, V>
-  public final Spliterator<Entry<K, V>> spliterator() {
-    return this.toMap().entrySet().spliterator();
-  }
-
-  /**
-   * Returns a possibly parallel {@link Stream} of this {@link
-   * Bindings}' {@linkplain Entry entries}.
-   *
-   * @return a possibly parallel {@link Stream} of this {@link
-   * Bindings}' {@linkplain Entry entries}
-   *
-   * @nullability This method never returns {@code null}.
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   */
-  public final Stream<Entry<K, V>> parallelStream() {
-    return this.toMap().entrySet().parallelStream();
-  }
-
-  /**
-   * Returns a possibly parallel {@link Stream} of this {@link
-   * Bindings}' {@linkplain Entry entries}.
-   *
-   * @return a possibly parallel {@link Stream} of this {@link
-   * Bindings}' {@linkplain Entry entries}
-   *
-   * @nullability This method never returns {@code null}.
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   */
-  public final Stream<Entry<K, V>> stream() {
-    return this.toMap().entrySet().stream();
-  }
-
-  /**
-   * Returns {@code true} if this {@link Bindings} logically contains
-   * the supplied {@link Bindings}.
-   *
-   * <p>A {@link Bindings} is said to contain another {@link
-   * Bindings} if either:</p>
-   *
-   * <ul>
-   *
-   * <li>the two {@link Bindings} instances are identical, or</li>
-   *
-   * <li>the {@linkplain Map#size() size} of the first {@link
-   * Bindings} is greater than the {@linkplain Map#size() size} of the
-   * second {@link Bindings}, and the {@linkplain Map#entrySet() entry
-   * set} of this {@link Bindings} {@linkplain
-   * java.util.Set#containsAll(java.util.Collection) contains all} of
-   * the entries in the second {@link Bindings}' {@linkplain
-   * Map#entrySet() entry set}</li>
-   *
-   * </ul>
-   *
-   * @param other the {@link Bindings} to test; must not be {@code
-   * null}
-   *
-   * @return {@code true} if this {@link Bindings} logically
-   * contains the supplied {@link Bindings}
-   *
-   * @exception NullPointerException if {@code other} is {@code null}
+   * @nullability This method may return {@code null}.
    *
    * @idempotency This method is idempotent and deterministic.
    *
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    *
-   * @see Map#size()
-   *
-   * @see java.util.Set#containsAll(java.util.Collection)
+   * @see #unique(String)
    */
-  public final boolean contains(final Bindings<?, ?> other) {
-    return this == other || this.size() >= other.size() && this.toMap().entrySet().containsAll(other.toMap().entrySet()); 
+  public final V uniqueValue(final String name) {
+    final B b = this.unique(name);
+    return b == null ? null : b.value();
   }
 
   /**
-   * Returns {@code true} if and only if this {@link Bindings}
-   * logically contains an entry equal to the supplied {@link Entry}.
+   * Returns the sole {@link Binding} instance whose {@linkplain
+   * Binding#name() name} {@linkplain String#equals(Object) is equal
+   * to} the supplied {@code name}, or {@code null} if either there is
+   * no such {@link Binding} or there are several {@link Binding}s
+   * with the supplied {@code name}.
    *
-   * @param e the {@link Entry} to test; may be {@code null} in which
-   * case {@code false} will be returned
+   * @param name the name; may be {@code null} in which case {@code
+   * false} will be returned
    *
-   * @return {@code true} if and only if this {@link Bindings}
-   * logically contains an entry equal to the supplied {@link Entry}
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   */
-  public final boolean contains(final Entry<?, ?> e) {
-    final Object v = e == null ? null : this.toMap().get(e.getKey());
-    return v != null && v.equals(e.getValue());
-  }
-
-  /**
-   * Returns {@code true} if and only if this {@link Bindings}
-   * logically contains a key equal to the supplied {@code key}.
-   *
-   * @param key the key in question; may be {@code null} in which case
-   * {@code false} will be returned
-   *
-   * @return {@code true} if and only if this {@link Bindings}
-   * logically contains a key equal to the supplied {@code key}
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
-   */
-  public final boolean containsKey(final Object key) {
-    return key != null && this.toMap().containsKey(key);
-  }
-
-  /**
-   * Returns the value indexed under the supplied {@code key}, or
-   * {@code null} if there is no such value.
-   *
-   * @param key the key in question; may be {@code null} in which case
-   * {@code false} will be returned
-   *
-   * @return the value indexed under the supplied {@code key}, or
-   * {@code null} if there is no such value
+   * @return the sole {@link Binding} instance whose {@linkplain
+   * Binding#name() name} {@linkplain String#equals(Object) is equal
+   * to} the supplied {@code name}, or {@code null} if either there is
+   * no such {@link Binding} or there are several {@link Binding}s
+   * with the supplied {@code name}.
    *
    * @nullability This method may return {@code null}.
    *
@@ -370,207 +195,385 @@ public abstract class Bindings<K extends Comparable<? super K>, V> implements Co
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public final V get(final Object key) {
-    return key == null ? null : this.toMap().get(key);
+  public final B unique(final String name) {
+    B returnValue = null;
+    if (name != null) {
+      for (final B b : this) {
+        if (b.name().equals(name)) {
+          if (returnValue == null) {
+            returnValue = b;
+          } else {
+            return null;
+          }
+        }
+      }
+    }
+    return returnValue;
   }
 
   /**
-   * Returns {@code true} if and only if this {@link Bindings} is a
-   * subset of the supplied {@link Bindings}.
+   * Returns {@code true} if and only if the supplied {@link Object}
+   * is contained by this {@link Bindings}.
    *
-   * @param other the other {@link Bindings}; must not be {@code
-   * null}
+   * <p>If the {@link Object} is a {@link Binding}, the containment
+   * check is performed via an equality check.  If the {@link Object}
+   * is a {@link String}, then this method will return {@code true} if
+   * there is a {@link Binding} contained by this {@link Bindings}
+   * whose {@linkplain Binding#name() name} {@linkplain
+   * String#equals(Object) is equal to} the supplied {@link
+   * String}.</p>
    *
-   * @return {@code true} if and only if this {@link Bindings} is a
-   * subset of the supplied {@link Bindings}
+   * <p>There may be many {@link Binding} instances contained by this
+   * {@link Bindings} whose {@linkplain Binding#name() names} are
+   * {@linkplain String#equals(Object) equal}.</p>
    *
-   * @exception NullPointerException if {@code other} is {@code null}
+   * @param o the {@link Object} to test; {@code true} return values
+   * are possible only when this {@link Object} is either a {@link
+   * Binding} or a {@link String}
+   *
+   * @return {@code true} if and only if the supplied {@link Object}
+   * is contained by this {@link Bindings}
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see #containsUnique(String)
+   */
+  public final boolean contains(final Object o) {
+    if (o == null || o instanceof Binding<?, ?, ?>) {
+      return this.bindings.contains(o);
+    }
+    for (final B b : this) {
+      if (b.name().equals(o)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Returns {@code true} if and only if there is exactly one {@link
+   * Binding} contained by this {@link Bindings} whose {@linkplain
+   * Binding#name() name} {@linkplain String#equals(Object) is equal
+   * to} the supplied {@code name}.
+   *
+   * @param name the name to test; may be {@code null} in which case
+   * {@code false} will be returned
+   *
+   * @return {@code true} if and only if there is exactly one {@link
+   * Binding} contained by this {@link Bindings} whose {@linkplain
+   * Binding#name() name} {@linkplain String#equals(Object) is equal
+   * to} the supplied {@code name}
    *
    * @idempotency This method is idempotent and deterministic.
    *
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public final boolean isSubsetOf(final Bindings<?, ?> other) {
-    return other == this || other.contains(this);
+  public final boolean containsUnique(final String name) {
+    return this.unique(name) != null;
   }
 
   /**
-   * Returns the number of entries this {@link Bindings} has in
-   * common with the supplied {@link Bindings}.
+   * Returns a {@link Stream} of this {@link Bindings}' {@linkplain
+   * Binding entries}.
+   *
+   * @return a {@link Stream} of this {@link Bindings}' {@linkplain
+   * Binding entries}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  public final Stream<B> stream() {
+    return this.bindings.stream();
+  }
+
+  /**
+   * Returns a non-{@code null}, immutable {@link Iterator} of {@link
+   * Binding} instances contained by this {@link Bindings}.
+   *
+   * @return a non-{@code null}, immutable {@link Iterator} of {@link
+   * Binding} instances contained by this {@link Bindings}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  @Override // Iterable<B>
+  public final Iterator<B> iterator() {
+    return this.bindings.iterator();
+  }
+
+  /**
+   * Returns a non-{@code null}, immutable {@link Spliterator} of
+   * {@link Binding} instances contained by this {@link Bindings}.
+   *
+   * @return a non-{@code null}, immutable {@link Spliterator} of
+   * {@link Binding} instances contained by this {@link Bindings}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  @Override // Iterable<B>
+  public final Spliterator<B> spliterator() {
+    return this.bindings.spliterator();
+  }
+
+  /**
+   * Returns the number of entries this {@link Bindings} has in common
+   * with the supplied {@link Iterable}.
    *
    * <p>The number returned will be {@code 0} or greater.</p>
    *
-   * @param other the other {@link Bindings}; may be {@code null} in
-   * which case {@code 0} will be returned
+   * @param other the {@link Iterable}; may be {@code null} in which
+   * case {@code 0} will be returned
    *
-   * @return the number of entries this {@link Bindings} has in
-   * common with the supplied {@link Bindings}
+   * @return the number of entries this {@link Bindings} has in common
+   * with the supplied {@link Iterable}
    *
    * @idempotency This method is idempotent and deterministic.
    *
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public final int intersectionSize(final Bindings<?, ?> other) {
-    if (other == this) {
-      // Just an identity check to rule this easy case out.
-      return this.size();
-    } else if (other == null || other.isEmpty()) {
+  public final int intersectionSize(final Iterable<?> other) {
+    if (other == null) {
       return 0;
+    } else if (this == other) {
+      return this.size();
     } else {
-      final Collection<? extends Entry<?, ?>> otherEntrySet = other.toMap().entrySet();
-      return (int)this.toMap().entrySet()
-        .stream()
-        .filter(otherEntrySet::contains)
-        .count();
+      final Iterator<?> i = other.iterator();
+      if (i.hasNext()) {
+        int count = this.bindings.contains(i.next()) ? 1 : 0;
+        while (i.hasNext()) {
+          if (this.bindings.contains(i.next())) {
+            ++count;
+          }
+        }
+        return count;
+      } else {
+        return 0;
+      }
     }
   }
 
   /**
    * Returns the size of the <em>symmetric difference</em> between
-   * this {@link Bindings} and the supplied {@link Bindings}.
+   * this {@link Bindings} and the supplied {@link Iterable}.
    *
    * <p>The number returned is always {@code 0} or greater.</p>
    *
-   * <p>The size of the symmetric difference between two {@link
-   * Bindings} instances is the number of qualifier entries that are
-   * in one {@link Bindings} instance but not in the other.</p>
+   * <p>The size of the symmetric difference between this {@link
+   * Bindings} instance and the supplied {@link Iterable} is the
+   * number of entries that are in one of these two objects but not in
+   * the other.</p>
    *
-   * @param other the other {@link Bindings} instance; may be {@code
-   * null}
+   * @param other an {@link Iterable}; may be {@code null} in which
+   * case the result of an invocation of this {@link Bindings}'
+   * {@link #size()} method will be returned
    *
    * @return the size of the <em>symmetric difference</em> between
-   * this {@link Bindings} and the supplied {@link Bindings};
-   * always {@code 0} or greater
+   * this {@link Bindings} and the supplied {@link Iterable}; always
+   * {@code 0} or greater
    *
    * @idempotency This method is idempotent and deterministic.
    *
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public final int symmetricDifferenceSize(final Bindings<?, ?> other) {
-    if (other == this) {
-      // Just an identity check to rule this easy case out.
-      return 0;
-    } else if (other == null || other.isEmpty()) {
+  public final int symmetricDifferenceSize(final Iterable<?> other) {
+    if (other == null) {
       return this.size();
-    } else if (this.equals(other)) {
+    } else if (this == other) {
       return 0;
     } else {
-      final Collection<Entry<?, ?>> otherSymmetricDifference = new HashSet<>(this.toMap().entrySet());
-      other.toMap()
-        .entrySet()
-        .stream()
-        .filter(Predicate.not(otherSymmetricDifference::add))
-        .forEach(otherSymmetricDifference::remove);
-      return otherSymmetricDifference.size();
+      final Iterator<?> i = other.iterator();
+      if (i.hasNext()) {
+        final Set<? super Object> symmetricDifference = new HashSet<>(this.bindings);
+        Object b = i.next();
+        if (!symmetricDifference.add(b)) {
+          symmetricDifference.remove(b);
+        }
+        while (i.hasNext()) {
+          b = i.next();
+          if (!symmetricDifference.add(b)) {
+            symmetricDifference.remove(b);
+          }
+        }
+        return symmetricDifference.size();
+      } else {
+        return this.size();
+      }
     }
+  }
+
+  /**
+   * Returns an {@link Optional} housing a {@link ConstantDesc}
+   * describing this {@link Bindings}, if this {@link Bindings} is
+   * capable of being represented as a <a
+   * href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/package-summary.html#condycon">dynamic
+   * constant</a>, or an {@linkplain Optional#isEmpty() empty} {@link
+   * Optional} if not.
+   *
+   * @return an {@link Optional} housing a {@link ConstantDesc}
+   * describing this {@link Binding}, if this {@link Bindings} is
+   * capable of being represented as a <a
+   * href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/package-summary.html#condycon">dynamic
+   * constant</a>, or an {@linkplain Optional#isEmpty() empty} {@link
+   * Optional} if not
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see #describeConstructor()
+   *
+   * @see <a
+   * href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/package-summary.html#condycon">Dynamically-computed
+   * constants</a>
+   */
+  @Override // Constable
+  public final Optional<? extends ConstantDesc> describeConstable() {
+    final MethodHandleDesc constructor = this.describeConstructor();
+    if (constructor == null) {
+      return Optional.empty();
+    }
+    final ConstantDesc bindingsCd = Constables.describeConstable(this.bindings).orElse(null);
+    if (bindingsCd == null) {
+      return Optional.empty();
+    }
+    return
+      Optional.of(DynamicConstantDesc.of(BSM_INVOKE, constructor, bindingsCd));
+  }
+
+  /**
+   * Returns a {@link MethodHandleDesc} describing the constructor or
+   * {@code static} method that will be used to create a <a
+   * href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/package-summary.html#condycon">dynamic
+   * constant</a> representing this {@link Bindings}.
+   *
+   * @return a {@link MethodHandleDesc} describing the constructor or
+   * {@code static} method that will be used to create a <a
+   * href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/package-summary.html#condycon">dynamic
+   * constant</a> representing this {@link Bindings}
+   *
+   * @nullability This method does not, and its overrides must not,
+   * return {@code null}.
+   *
+   * @idempotency This method is, and its overrides must be,
+   * idempotent and deterministic.
+   *
+   * @threadsafety This method is, and its overrides must be, safe for
+   * concurrent use by multiple threads.
+   */
+  protected MethodHandleDesc describeConstructor() {
+    return
+      MethodHandleDesc.ofConstructor(this.getClass().describeConstable().orElseThrow(),
+                                     new ClassDesc[] { CD_Iterable });
   }
 
   /**
    * Returns a hashcode for this {@link Bindings}.
    *
-   * <p>Only binding entries are considered.</p>
-   *
    * @return a hashcode for this {@link Bindings}
    *
-   * @idempotency This method is idempotent and deterministic.
+   * @idempotency This method is, and its overrides must be,
+   * idempotent and deterministic.
    *
-   * @threadsafety This method is safe for concurrent use by multiple
-   * threads.
+   * @threadsafety This method is, and its overrides must be, safe for
+   * concurrent use by multiple threads.
    *
-   * @see Object#hashCode()
+   * @see #equals(Object)
    */
   @Override // Object
-  public int hashCode() {
-    return this.toMap().hashCode();
+  public final int hashCode() {
+    return this.bindings.hashCode();
   }
 
   /**
-   * Returns {@code true} if this {@link Bindings} is equal to the
-   * supplied {@link Object}.
+   * Returns {@code true} if and only if this {@link Bindings} is
+   * equal to the supplied {@link Object}.
    *
-   * <p>Only binding entries are considered.</p>
+   * <p>The supplied {@link Object} is considered to be equal to this
+   * {@link Bindings} if and only if:</p>
    *
-   * @param other the object to test; may be {@code null} in which
-   * case {@code false} will be returned
+   * <ul>
    *
-   * @return {@code true} if this {@link Bindings} is equal to the
-   * supplied {@link Object}; {@code false} otherwise
+   * <li>Its {@linkplain #getClass() class} is identical to this
+   * {@link Bindings}' {@linkplain #getClass() class}, and</li>
    *
-   * @idempotency This method is idempotent and deterministic.
+   * <li>Each of the {@link Binding} instances it contains is
+   * {@linkplain Binding#equals(Object) equal to} the corresponding
+   * {@link Binding} instance contained by this {@link Bindings}</li>
    *
-   * @threadsafety This method is safe  for concurrent use by multiple
-   * threads.
+   * </ul>
+   *
+   * @param other the {@link Object} to test; may be {@code null} in
+   * which case {@code false} will be returned
+   *
+   * @return {@code true} if the supplied {@link Object} is equal to
+   * this {@link Binding}
+   *
+   * @idempotency This method is, and its overrides must be,
+   * idempotent and deterministic.
+   *
+   * @threadsafety This method is, and its overrides must be, safe for
+   * concurrent use by multiple threads.
+   *
+   * @see #hashCode()
+   *
+   * @see Binding#equals(Object)
    */
   @Override // Object
-  public boolean equals(final Object other) {
+  public final boolean equals(final Object other) {
     if (other == this) {
       return true;
     } else if (other != null && other.getClass() == this.getClass()) {
+      final Bindings<?, ?, ?> her = (Bindings<?, ?, ?>)other;
       return
-        Objects.equals(this.toMap(), ((Bindings<?, ?>)other).toMap());
+        Objects.equals(this.bindings, her.bindings);
     } else {
       return false;
     }
   }
 
   /**
-   * Returns a non-{@code null} {@link String} representation of this
-   * {@link Bindings}.
+   * Returns a {@link String} representation of this {@link Bindings}.
    *
    * <p>The format of the returned {@link String} is deliberately
-   * undefined and subject to change without notice between versions
-   * of this class.</p>
+   * undefined and may change between versions of this class without
+   * prior notice.</p>
    *
-   * @return a non-{@code null} {@link String} representation of this
-   * {@link Bindings}
+   * @return a {@link String} representation of this {@link Bindings}
    *
-   * @nullability This method never returns {@code null}.
+   * @nullability This method does not, and its overrides must not,
+   * return {@code null}.
    *
-   * @idempotency This method is idempotent and deterministic.
+   * @idempotency This method is, and its overrides must be,
+   * idempotent and deterministic.
    *
-   * @threadsafety This method is safe  for concurrent use by multiple
-   * threads.
-   *
-   * @see #toString(boolean)
+   * @threadsafety This method is, and its overrides must be, safe for
+   * concurrent use by multiple threads.
    */
   @Override // Object
   public String toString() {
-    return this.toString(true);
-  }
-
-  /**
-   * Returns a non-{@code null} {@link String} representation of this
-   * {@link Bindings}.
-   *
-   * <p>The format of the returned {@link String} is deliberately
-   * undefined and subject to change without notice between versions
-   * of this class.</p>
-   *
-   * @param withInfo if {@code true}, then a {@link String}
-   * representatino of the {@linkplain #info() informational bindings}
-   * will be included in the returned {@link String}
-   *
-   * @return a non-{@code null} {@link String} representation of this
-   * {@link Bindings}
-   *
-   * @nullability This method never returns {@code null}.
-   *
-   * @idempotency This method is idempotent and deterministic.
-   *
-   * @threadsafety This method is safe  for concurrent use by multiple
-   * threads.
-   *
-   * @see #toString(boolean)
-   */
-  public String toString(final boolean withInfo) {
-    if (withInfo) {
-      return Map.of("bindings", this.toMap().toString(), "info", this.info().toString()).toString();
-    } else {
-      return Map.of("bindings", this.toMap().toString()).toString();
-    }
+    return this.bindings.toString();
   }
 
 }

@@ -28,7 +28,9 @@
  */
 module org.microbean.qualifier {
 
+  requires org.microbean.constant;
   requires transitive org.microbean.development.annotation;
+  requires org.microbean.invoke; // actually only needed at runtime, but the module system doesn't let us say this
   
   exports org.microbean.qualifier;
   

@@ -21,6 +21,7 @@ import java.lang.constant.ConstantDesc;
 
 import java.lang.invoke.MethodHandles;
 
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -42,22 +43,22 @@ final class TestConstableSemantics {
 
   @Test
   final void testConstableSemantics() throws ReflectiveOperationException {
-    final Qualifiers<String, String> q = Qualifiers.of("a", "b", "c", "d");
+    final Qualifiers<String, String> q =
+      Qualifiers.of(List.of(Qualifier.<String, String>of("a", "b"),
+                             Qualifier.<String, String>of("c", "d")));
     assertEquals(q, q.describeConstable().orElseThrow().resolveConstantDesc(MethodHandles.lookup()));
   }
 
   @Test
-  final void testDeliberateLossOfInfo() throws ReflectiveOperationException {
-    final Qualifiers<String, String> q0 =
-      Qualifiers.of(Map.of("a", "b", "c", "d"),
-                    Map.of("w", "x", "y", "z"));
-    @SuppressWarnings("unchecked")
-    final Qualifiers<String, String> q1 =
-      (Qualifiers<String, String>)q0.describeConstable().orElseThrow().resolveConstantDesc(MethodHandles.lookup());
-    assertEquals(q0.toMap(), q1.toMap());
-    assertTrue(q1.info().isEmpty());
-    assertNotEquals(q0.info(), q1.info());
-    assertEquals(q0, q1);
+  final void testQualifierDescribeConstable() throws ReflectiveOperationException {
+    final Qualifier<String, String> q = Qualifier.of("a", null, Map.of("c", "d"));
+    assertEquals(q, q.describeConstable().orElseThrow().resolveConstantDesc(MethodHandles.publicLookup().in(Qualifier.class)));
+  }
+
+  @Test
+  final void testQualifiersDescribeConstable() throws ReflectiveOperationException {
+    final Qualifiers<String, String> q2 = Qualifiers.of(Qualifier.of("a", "b", Map.of("c", "d")));
+    assertEquals(q2, q2.describeConstable().orElseThrow().resolveConstantDesc(MethodHandles.publicLookup().in(Qualifiers.class)));
   }
 
 }
