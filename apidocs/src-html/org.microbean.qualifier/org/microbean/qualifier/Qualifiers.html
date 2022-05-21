@@ -389,37 +389,64 @@
 <span class="source-line-no">375</span><span id="line-375">   * Returns a {@link Qualifiers}, which may or may not be newly</span>
 <span class="source-line-no">376</span><span id="line-376">   * created, representing the supplied arguments.</span>
 <span class="source-line-no">377</span><span id="line-377">   *</span>
-<span class="source-line-no">378</span><span id="line-378">   * @param qualifiers an {@link Iterable} representing {@link</span>
-<span class="source-line-no">379</span><span id="line-379">   * Qualifier} instances the {@link Qualifiers} will contain; may be</span>
-<span class="source-line-no">380</span><span id="line-380">   * {@code null}</span>
-<span class="source-line-no">381</span><span id="line-381">   *</span>
-<span class="source-line-no">382</span><span id="line-382">   * @return a {@link Qualifiers}</span>
+<span class="source-line-no">378</span><span id="line-378">   * @param qualifier0 the first {@link Qualifier} the {@link</span>
+<span class="source-line-no">379</span><span id="line-379">   * Qualifiers} will contain; must not be {@code null}</span>
+<span class="source-line-no">380</span><span id="line-380">   *</span>
+<span class="source-line-no">381</span><span id="line-381">   * @param qualifier1 the second {@link Qualifier} the {@link</span>
+<span class="source-line-no">382</span><span id="line-382">   * Qualifiers} will contain; must not be {@code null}</span>
 <span class="source-line-no">383</span><span id="line-383">   *</span>
-<span class="source-line-no">384</span><span id="line-384">   * @nullability This method never returns {@code null}.</span>
+<span class="source-line-no">384</span><span id="line-384">   * @return a {@link Qualifiers}</span>
 <span class="source-line-no">385</span><span id="line-385">   *</span>
-<span class="source-line-no">386</span><span id="line-386">   * @idempotency This method is idempotent and deterministic.</span>
-<span class="source-line-no">387</span><span id="line-387">   *</span>
-<span class="source-line-no">388</span><span id="line-388">   * @threadsafety This method is safe for concurrent use by multiple</span>
-<span class="source-line-no">389</span><span id="line-389">   * threads.</span>
-<span class="source-line-no">390</span><span id="line-390">   */</span>
-<span class="source-line-no">391</span><span id="line-391">  @SuppressWarnings("unchecked")</span>
-<span class="source-line-no">392</span><span id="line-392">  public static final Qualifiers&lt;?&gt; ofDisparate(final Iterable&lt;? extends Qualifier&lt;?&gt;&gt; qualifiers) {</span>
-<span class="source-line-no">393</span><span id="line-393">    if (qualifiers == null) {</span>
-<span class="source-line-no">394</span><span id="line-394">      return of();</span>
-<span class="source-line-no">395</span><span id="line-395">    }</span>
-<span class="source-line-no">396</span><span id="line-396">    final Iterator&lt;? extends Qualifier&lt;?&gt;&gt; i = qualifiers.iterator();</span>
-<span class="source-line-no">397</span><span id="line-397">    if (i.hasNext()) {</span>
-<span class="source-line-no">398</span><span id="line-398">      final Collection&lt;Qualifier&lt;Object&gt;&gt; newQualifiers = new TreeSet&lt;&gt;();</span>
-<span class="source-line-no">399</span><span id="line-399">      newQualifiers.add((Qualifier&lt;Object&gt;)i.next());</span>
-<span class="source-line-no">400</span><span id="line-400">      while (i.hasNext()) {</span>
-<span class="source-line-no">401</span><span id="line-401">        newQualifiers.add((Qualifier&lt;Object&gt;)i.next());</span>
-<span class="source-line-no">402</span><span id="line-402">      }</span>
-<span class="source-line-no">403</span><span id="line-403">      return new Qualifiers&lt;&gt;(newQualifiers);</span>
-<span class="source-line-no">404</span><span id="line-404">    }</span>
-<span class="source-line-no">405</span><span id="line-405">    return of();</span>
-<span class="source-line-no">406</span><span id="line-406">  }</span>
-<span class="source-line-no">407</span><span id="line-407"></span>
-<span class="source-line-no">408</span><span id="line-408">}</span>
+<span class="source-line-no">386</span><span id="line-386">   * @exception NullPointerException if {@code qualifier} is {@code</span>
+<span class="source-line-no">387</span><span id="line-387">   * null}</span>
+<span class="source-line-no">388</span><span id="line-388">   *</span>
+<span class="source-line-no">389</span><span id="line-389">   * @nullability This method never returns {@code null}.</span>
+<span class="source-line-no">390</span><span id="line-390">   *</span>
+<span class="source-line-no">391</span><span id="line-391">   * @idempotency This method is idempotent and deterministic.</span>
+<span class="source-line-no">392</span><span id="line-392">   *</span>
+<span class="source-line-no">393</span><span id="line-393">   * @threadsafety This method is safe for concurrent use by multiple</span>
+<span class="source-line-no">394</span><span id="line-394">   * threads.</span>
+<span class="source-line-no">395</span><span id="line-395">   */</span>
+<span class="source-line-no">396</span><span id="line-396">  public static final Qualifiers&lt;?&gt; ofDisparate(final Qualifier&lt;?&gt; qualifier0, final Qualifier&lt;?&gt; qualifier1) {</span>
+<span class="source-line-no">397</span><span id="line-397">    return ofDisparate(List.of(qualifier0, qualifier1));</span>
+<span class="source-line-no">398</span><span id="line-398">  }</span>
+<span class="source-line-no">399</span><span id="line-399"></span>
+<span class="source-line-no">400</span><span id="line-400"></span>
+<span class="source-line-no">401</span><span id="line-401">  /**</span>
+<span class="source-line-no">402</span><span id="line-402">   * Returns a {@link Qualifiers}, which may or may not be newly</span>
+<span class="source-line-no">403</span><span id="line-403">   * created, representing the supplied arguments.</span>
+<span class="source-line-no">404</span><span id="line-404">   *</span>
+<span class="source-line-no">405</span><span id="line-405">   * @param qualifiers an {@link Iterable} representing {@link</span>
+<span class="source-line-no">406</span><span id="line-406">   * Qualifier} instances the {@link Qualifiers} will contain; may be</span>
+<span class="source-line-no">407</span><span id="line-407">   * {@code null}</span>
+<span class="source-line-no">408</span><span id="line-408">   *</span>
+<span class="source-line-no">409</span><span id="line-409">   * @return a {@link Qualifiers}</span>
+<span class="source-line-no">410</span><span id="line-410">   *</span>
+<span class="source-line-no">411</span><span id="line-411">   * @nullability This method never returns {@code null}.</span>
+<span class="source-line-no">412</span><span id="line-412">   *</span>
+<span class="source-line-no">413</span><span id="line-413">   * @idempotency This method is idempotent and deterministic.</span>
+<span class="source-line-no">414</span><span id="line-414">   *</span>
+<span class="source-line-no">415</span><span id="line-415">   * @threadsafety This method is safe for concurrent use by multiple</span>
+<span class="source-line-no">416</span><span id="line-416">   * threads.</span>
+<span class="source-line-no">417</span><span id="line-417">   */</span>
+<span class="source-line-no">418</span><span id="line-418">  @SuppressWarnings("unchecked")</span>
+<span class="source-line-no">419</span><span id="line-419">  public static final Qualifiers&lt;?&gt; ofDisparate(final Iterable&lt;? extends Qualifier&lt;?&gt;&gt; qualifiers) {</span>
+<span class="source-line-no">420</span><span id="line-420">    if (qualifiers == null) {</span>
+<span class="source-line-no">421</span><span id="line-421">      return of();</span>
+<span class="source-line-no">422</span><span id="line-422">    }</span>
+<span class="source-line-no">423</span><span id="line-423">    final Iterator&lt;? extends Qualifier&lt;?&gt;&gt; i = qualifiers.iterator();</span>
+<span class="source-line-no">424</span><span id="line-424">    if (i.hasNext()) {</span>
+<span class="source-line-no">425</span><span id="line-425">      final Collection&lt;Qualifier&lt;Object&gt;&gt; newQualifiers = new TreeSet&lt;&gt;();</span>
+<span class="source-line-no">426</span><span id="line-426">      newQualifiers.add((Qualifier&lt;Object&gt;)i.next());</span>
+<span class="source-line-no">427</span><span id="line-427">      while (i.hasNext()) {</span>
+<span class="source-line-no">428</span><span id="line-428">        newQualifiers.add((Qualifier&lt;Object&gt;)i.next());</span>
+<span class="source-line-no">429</span><span id="line-429">      }</span>
+<span class="source-line-no">430</span><span id="line-430">      return new Qualifiers&lt;&gt;(newQualifiers);</span>
+<span class="source-line-no">431</span><span id="line-431">    }</span>
+<span class="source-line-no">432</span><span id="line-432">    return of();</span>
+<span class="source-line-no">433</span><span id="line-433">  }</span>
+<span class="source-line-no">434</span><span id="line-434"></span>
+<span class="source-line-no">435</span><span id="line-435">}</span>
 
 
 
