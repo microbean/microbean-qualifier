@@ -43,21 +43,21 @@ final class TestConstableSemantics {
 
   @Test
   final void testConstableSemantics() throws ReflectiveOperationException {
-    final Qualifiers<String, String> q =
-      Qualifiers.of(List.of(Qualifier.<String, String>of("a", "b"),
-                             Qualifier.<String, String>of("c", "d")));
+    final Qualifiers<String> q =
+      Qualifiers.of(List.of(Qualifier.<String>of("a", "b"),
+                            Qualifier.<String>of("c", "d")));
     assertEquals(q, q.describeConstable().orElseThrow().resolveConstantDesc(MethodHandles.lookup()));
   }
 
   @Test
   final void testQualifierDescribeConstable() throws ReflectiveOperationException {
-    final Qualifier<String, String> q = Qualifier.of("a", null, Map.of("c", "d"));
+    final Qualifier<String> q = Qualifier.of("a", null, Map.of("c", "d"));
     assertEquals(q, q.describeConstable().orElseThrow().resolveConstantDesc(MethodHandles.publicLookup().in(Qualifier.class)));
   }
 
   @Test
   final void testQualifiersDescribeConstable() throws ReflectiveOperationException {
-    final Qualifiers<String, String> q2 = Qualifiers.of(Qualifier.of("a", "b", Map.of("c", "d")));
+    final Qualifiers<String> q2 = Qualifiers.of(Qualifier.of("a", "b", Map.of("c", "d")));
     assertEquals(q2, q2.describeConstable().orElseThrow().resolveConstantDesc(MethodHandles.publicLookup().in(Qualifiers.class)));
   }
 

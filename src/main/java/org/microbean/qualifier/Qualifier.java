@@ -36,9 +36,6 @@ import static org.microbean.qualifier.ConstantDescs.CD_Qualifier;
  * href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
  * class.</p>
  *
- * @param <K> the type of a {@link Qualifier}'s {@linkplain
- * #attributes() attribute keys}
- *
  * @param <V> the type of a {@link Qualifier}'s {@linkplain #value()
  * value} and of its {@linkplain #attributes() attribute values}
  *
@@ -47,7 +44,7 @@ import static org.microbean.qualifier.ConstantDescs.CD_Qualifier;
  *
  * @see Binding
  */
-public final class Qualifier<K extends Comparable<? super K>, V> extends Binding<K, V, Qualifier<K, V>> {
+public final class Qualifier<V> extends Binding<V, Qualifier<V>> {
 
 
   /*
@@ -81,8 +78,8 @@ public final class Qualifier<K extends Comparable<? super K>, V> extends Binding
    */
   private Qualifier(final String name,
                     final V value,
-                    final Map<? extends K, ? extends V> attributes,
-                    final Map<? extends K, ? extends V> info) {
+                    final Map<? extends String, ?> attributes,
+                    final Map<? extends String, ?> info) {
     super(name, value, attributes, info);
   }
 
@@ -112,7 +109,7 @@ public final class Qualifier<K extends Comparable<? super K>, V> extends Binding
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  @Override // Binding<K, V, Qualifier<K, V>>
+  @Override // Binding<V, Qualifier<V>>
   protected final MethodHandleDesc describeConstructor() {
     return
       MethodHandleDesc.ofMethod(STATIC,
@@ -131,9 +128,6 @@ public final class Qualifier<K extends Comparable<? super K>, V> extends Binding
    * Returns a {@link Qualifier}, which may or may not be newly
    * created, representing the supplied arguments.
    *
-   * @param <K> the type of the {@link Qualifier}'s {@linkplain
-   * #attributes() attribute keys}
-   *
    * @param <V> the type of the {@link Qualifier}'s {@linkplain #value()
    * value} and of its {@linkplain #attributes() attribute values}
    *
@@ -149,16 +143,13 @@ public final class Qualifier<K extends Comparable<? super K>, V> extends Binding
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public static final <K extends Comparable<? super K>, V> Qualifier<K, V> of(final String name) {
+  public static final <V> Qualifier<V> of(final String name) {
     return of(name, null, null, null);
   }
 
   /**
    * Returns a {@link Qualifier}, which may or may not be newly
    * created, representing the supplied arguments.
-   *
-   * @param <K> the type of the {@link Qualifier}'s {@linkplain
-   * #attributes() attribute keys}
    *
    * @param <V> the type of the {@link Qualifier}'s {@linkplain #value()
    * value} and of its {@linkplain #attributes() attribute values}
@@ -178,16 +169,13 @@ public final class Qualifier<K extends Comparable<? super K>, V> extends Binding
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public static final <K extends Comparable<? super K>, V> Qualifier<K, V> of(final String name, final V value) {
+  public static final <V> Qualifier<V> of(final String name, final V value) {
     return of(name, value, null, null);
   }
 
   /**
    * Returns a {@link Qualifier}, which may or may not be newly
    * created, representing the supplied arguments.
-   *
-   * @param <K> the type of the {@link Qualifier}'s {@linkplain
-   * #attributes() attribute keys}
    *
    * @param <V> the type of the {@link Qualifier}'s {@linkplain #value()
    * value} and of its {@linkplain #attributes() attribute values}
@@ -210,18 +198,15 @@ public final class Qualifier<K extends Comparable<? super K>, V> extends Binding
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public static final <K extends Comparable<? super K>, V> Qualifier<K, V> of(final String name,
-                                                                              final V value,
-                                                                              final Map<? extends K, ? extends V> attributes) {
+  public static final <V> Qualifier<V> of(final String name,
+                                          final V value,
+                                          final Map<? extends String, ?> attributes) {
     return of(name, value, attributes, null);
   }
 
   /**
    * Returns a {@link Qualifier}, which may or may not be newly
    * created, representing the supplied arguments.
-   *
-   * @param <K> the type of the {@link Qualifier}'s {@linkplain
-   * #attributes() attribute keys}
    *
    * @param <V> the type of the {@link Qualifier}'s {@linkplain #value()
    * value} and of its {@linkplain #attributes() attribute values}
@@ -247,10 +232,10 @@ public final class Qualifier<K extends Comparable<? super K>, V> extends Binding
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public static final <K extends Comparable<? super K>, V> Qualifier<K, V> of(final String name,
-                                                                              final V value,
-                                                                              final Map<? extends K, ? extends V> attributes,
-                                                                              final Map<? extends K, ? extends V> info) {
+  public static final <V> Qualifier<V> of(final String name,
+                                          final V value,
+                                          final Map<? extends String, ?> attributes,
+                                          final Map<? extends String, ?> info) {
     return new Qualifier<>(name, value, attributes, info);
   }
 

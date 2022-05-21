@@ -43,9 +43,6 @@ import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
  * href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
  * class.</p>
  *
- * @param <K> the type of a {@link Qualifier}'s {@linkplain
- * Qualifier#attributes() attribute keys}
- *
  * @param <V> the type of a {@link Qualifier}'s {@linkplain
  * Qualifier#attributes() attribute values}
  *
@@ -54,7 +51,7 @@ import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
  *
  * @see Bindings
  */
-public final class Qualifiers<K extends Comparable<? super K>, V> extends Bindings<K, V, Qualifier<K, V>> {
+public final class Qualifiers<V> extends Bindings<V, Qualifier<V>> {
 
 
   /*
@@ -62,7 +59,7 @@ public final class Qualifiers<K extends Comparable<? super K>, V> extends Bindin
    */
 
 
-  private static final Qualifiers<?, ?> EMPTY = new Qualifiers<>(List.of());
+  private static final Qualifiers<?> EMPTY = new Qualifiers<>(List.of());
 
 
   /*
@@ -70,7 +67,7 @@ public final class Qualifiers<K extends Comparable<? super K>, V> extends Bindin
    */
 
 
-  private Qualifiers(final Iterable<? extends Qualifier<K, V>> qualifiers) {
+  private Qualifiers(final Iterable<? extends Qualifier<V>> qualifiers) {
     super(qualifiers);
   }
 
@@ -105,7 +102,7 @@ public final class Qualifiers<K extends Comparable<? super K>, V> extends Bindin
    *
    * @see #plus(Iterable)
    */
-  public final Qualifiers<K, V> plus(final Qualifier<K, V> qualifier) {
+  public final Qualifiers<V> plus(final Qualifier<V> qualifier) {
     if (qualifier == null) {
       return this;
     } else if (this.isEmpty()) {
@@ -138,17 +135,17 @@ public final class Qualifiers<K extends Comparable<? super K>, V> extends Bindin
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public final Qualifiers<K, V> plus(final Iterable<? extends Qualifier<K, V>> qualifiers) {
+  public final Qualifiers<V> plus(final Iterable<? extends Qualifier<V>> qualifiers) {
     if (qualifiers == null) {
       return this;
     } else if (this.isEmpty()) {
       return of(qualifiers);
     }
-    final Collection<Qualifier<K, V>> newQualifiers = new TreeSet<>();
-    for (final Qualifier<K, V> q : this) {
+    final Collection<Qualifier<V>> newQualifiers = new TreeSet<>();
+    for (final Qualifier<V> q : this) {
       newQualifiers.add(q);
     }
-    for (final Qualifier<K, V> q : qualifiers) {
+    for (final Qualifier<V> q : qualifiers) {
       newQualifiers.add(q);
     }
     return of(newQualifiers);
@@ -176,7 +173,7 @@ public final class Qualifiers<K extends Comparable<? super K>, V> extends Bindin
    * @threadsafety This method is safe for concurrent use by multiple
    * threads
    */
-  public final Qualifiers<K, V> withPrefix(final String prefix) {
+  public final Qualifiers<V> withPrefix(final String prefix) {
     if (prefix == null || this.isEmpty()) {
       return this;
     }
@@ -212,12 +209,12 @@ public final class Qualifiers<K extends Comparable<? super K>, V> extends Bindin
    * @threadsafety This method is safe for concurrent use by multiple
    * threads, assuming the supplied {@link Function} is
    */
-  public final Qualifiers<K, V> withPrefix(final Function<? super Qualifier<K, V>, ? extends String> f) {
+  public final Qualifiers<V> withPrefix(final Function<? super Qualifier<V>, ? extends String> f) {
     if (f == null || this.isEmpty()) {
       return this;
     }
-    final Collection<Qualifier<K, V>> newQualifiers = new TreeSet<>();
-    for (final Qualifier<K, V> q : this) {
+    final Collection<Qualifier<V>> newQualifiers = new TreeSet<>();
+    for (final Qualifier<V> q : this) {
       newQualifiers.add(Qualifier.of(f.apply(q),
                                      q.value(),
                                      q.attributes(),
@@ -246,7 +243,7 @@ public final class Qualifiers<K extends Comparable<? super K>, V> extends Bindin
    * @threadsafety This method is, and its overrides must be, safe for
    * concurrent use by multiple threads.
    */
-  @Override // Bindings<K, V, Qualifier<K, V>>
+  @Override // Bindings<V, Qualifier<V>>
   protected final MethodHandleDesc describeConstructor() {
     return
       MethodHandleDesc.ofMethod(STATIC,
@@ -266,9 +263,6 @@ public final class Qualifiers<K extends Comparable<? super K>, V> extends Bindin
    * created, whose {@link #isEmpty() isEmpty()} method will return
    * {@code true}.
    *
-   * @param <K> the type of the {@link Qualifier}'s {@linkplain
-   * Qualifier#attributes() attribute keys}
-   *
    * @param <V> the type of the {@link Qualifier}'s {@linkplain
    * Qualifier#attributes() attribute values}
    *
@@ -282,16 +276,13 @@ public final class Qualifiers<K extends Comparable<? super K>, V> extends Bindin
    * threads.
    */
   @SuppressWarnings("unchecked")
-  public static final <K extends Comparable<? super K>, V> Qualifiers<K, V> of() {
-    return (Qualifiers<K, V>)EMPTY;
+  public static final <V> Qualifiers<V> of() {
+    return (Qualifiers<V>)EMPTY;
   }
 
   /**
    * Returns a {@link Qualifiers}, which may or may not be newly
    * created, representing the supplied arguments.
-   *
-   * @param <K> the type of the {@link Qualifier}'s {@linkplain
-   * Qualifier#attributes() attribute keys}
    *
    * @param <V> the type of the {@link Qualifier}'s {@linkplain
    * Qualifier#attributes() attribute values}
@@ -311,16 +302,13 @@ public final class Qualifiers<K extends Comparable<? super K>, V> extends Bindin
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public static final <K extends Comparable<? super K>, V> Qualifiers<K, V> of(final Qualifier<K, V> qualifier) {
+  public static final <V> Qualifiers<V> of(final Qualifier<V> qualifier) {
     return of(List.of(Objects.requireNonNull(qualifier, "qualifier")));
   }
 
   /**
    * Returns a {@link Qualifiers}, which may or may not be newly
    * created, representing the supplied arguments.
-   *
-   * @param <K> the type of the {@link Qualifier}'s {@linkplain
-   * Qualifier#attributes() attribute keys}
    *
    * @param <V> the type of the {@link Qualifier}'s {@linkplain
    * Qualifier#attributes() attribute values}
@@ -343,17 +331,13 @@ public final class Qualifiers<K extends Comparable<? super K>, V> extends Bindin
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public static final <K extends Comparable<? super K>, V> Qualifiers<K, V> of(final Qualifier<K, V> qualifier0,
-                                                                               final Qualifier<K, V> qualifier1) {
+  public static final <V> Qualifiers<V> of(final Qualifier<V> qualifier0, final Qualifier<V> qualifier1) {
     return of(List.of(qualifier0, qualifier1));
   }
 
   /**
    * Returns a {@link Qualifiers}, which may or may not be newly
    * created, representing the supplied arguments.
-   *
-   * @param <K> the type of the {@link Qualifier}'s {@linkplain
-   * Qualifier#attributes() attribute keys}
    *
    * @param <V> the type of the {@link Qualifier}'s {@linkplain
    * Qualifier#attributes() attribute values}
@@ -371,13 +355,13 @@ public final class Qualifiers<K extends Comparable<? super K>, V> extends Bindin
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public static final <K extends Comparable<? super K>, V> Qualifiers<K, V> of(final Iterable<? extends Qualifier<K, V>> qualifiers) {
+  public static final <V> Qualifiers<V> of(final Iterable<? extends Qualifier<V>> qualifiers) {
     if (qualifiers == null) {
       return of();
     }
-    final Iterator<? extends Qualifier<K, V>> i = qualifiers.iterator();
+    final Iterator<? extends Qualifier<V>> i = qualifiers.iterator();
     if (i.hasNext()) {
-      final Collection<Qualifier<K, V>> newQualifiers = new TreeSet<>();
+      final Collection<Qualifier<V>> newQualifiers = new TreeSet<>();
       newQualifiers.add(i.next());
       while (i.hasNext()) {
         newQualifiers.add(i.next());
@@ -390,9 +374,6 @@ public final class Qualifiers<K extends Comparable<? super K>, V> extends Bindin
   /**
    * Returns a {@link Qualifiers}, which may or may not be newly
    * created, representing the supplied arguments.
-   *
-   * @param <K> the type of the {@link Qualifier}'s {@linkplain
-   * Qualifier#attributes() attribute keys}
    *
    * @param qualifiers an {@link Iterable} representing {@link
    * Qualifier} instances the {@link Qualifiers} will contain; may be
@@ -408,16 +389,16 @@ public final class Qualifiers<K extends Comparable<? super K>, V> extends Bindin
    * threads.
    */
   @SuppressWarnings("unchecked")
-  public static final <K extends Comparable<? super K>> Qualifiers<?, ?> ofDisparate(final Iterable<? extends Qualifier<?, ?>> qualifiers) {
+  public static final Qualifiers<?> ofDisparate(final Iterable<? extends Qualifier<?>> qualifiers) {
     if (qualifiers == null) {
       return of();
     }
-    final Iterator<? extends Qualifier<?, ?>> i = qualifiers.iterator();
+    final Iterator<? extends Qualifier<?>> i = qualifiers.iterator();
     if (i.hasNext()) {
-      final Collection<Qualifier<K, Object>> newQualifiers = new TreeSet<>();
-      newQualifiers.add((Qualifier<K, Object>)i.next());
+      final Collection<Qualifier<Object>> newQualifiers = new TreeSet<>();
+      newQualifiers.add((Qualifier<Object>)i.next());
       while (i.hasNext()) {
-        newQualifiers.add((Qualifier<K, Object>)i.next());
+        newQualifiers.add((Qualifier<Object>)i.next());
       }
       return new Qualifiers<>(newQualifiers);
     }

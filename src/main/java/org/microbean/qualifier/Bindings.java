@@ -50,9 +50,6 @@ import static org.microbean.qualifier.ConstantDescs.CD_Iterable;
  * An abstract, immutable {@linkplain Iterable iterable} collection of
  * {@link Binding} instances.
  *
- * @param <K> the type of a {@link Binding}'s {@linkplain
- * Binding#attributes() attribute keys}
- *
  * @param <V> the type of a {@link Binding}'s {@linkplain
  * Binding#attributes() attribute values}
  *
@@ -61,7 +58,7 @@ import static org.microbean.qualifier.ConstantDescs.CD_Iterable;
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  */
-public abstract class Bindings<K extends Comparable<? super K>, V, B extends Binding<K, V, B>> implements Constable, Iterable<B> {
+public abstract class Bindings<V, B extends Binding<V, B>> implements Constable, Iterable<B> {
 
 
   /*
@@ -242,7 +239,7 @@ public abstract class Bindings<K extends Comparable<? super K>, V, B extends Bin
    * @see #containsUnique(String)
    */
   public final boolean contains(final Object o) {
-    if (o == null || o instanceof Binding<?, ?, ?>) {
+    if (o == null || o instanceof Binding<?, ?>) {
       return this.bindings.contains(o);
     }
     for (final B b : this) {
@@ -545,7 +542,7 @@ public abstract class Bindings<K extends Comparable<? super K>, V, B extends Bin
     if (other == this) {
       return true;
     } else if (other != null && other.getClass() == this.getClass()) {
-      final Bindings<?, ?, ?> her = (Bindings<?, ?, ?>)other;
+      final Bindings<?, ?> her = (Bindings<?, ?>)other;
       return
         Objects.equals(this.bindings, her.bindings);
     } else {
