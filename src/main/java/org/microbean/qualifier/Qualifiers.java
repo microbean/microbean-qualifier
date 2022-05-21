@@ -375,6 +375,33 @@ public final class Qualifiers<V> extends Bindings<V, Qualifier<V>> {
    * Returns a {@link Qualifiers}, which may or may not be newly
    * created, representing the supplied arguments.
    *
+   * @param qualifier0 the first {@link Qualifier} the {@link
+   * Qualifiers} will contain; must not be {@code null}
+   *
+   * @param qualifier1 the second {@link Qualifier} the {@link
+   * Qualifiers} will contain; must not be {@code null}
+   *
+   * @return a {@link Qualifiers}
+   *
+   * @exception NullPointerException if {@code qualifier} is {@code
+   * null}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  public static final Qualifiers<?> ofDisparate(final Qualifier<?> qualifier0, final Qualifier<?> qualifier1) {
+    return ofDisparate(List.of(qualifier0, qualifier1));
+  }
+
+
+  /**
+   * Returns a {@link Qualifiers}, which may or may not be newly
+   * created, representing the supplied arguments.
+   *
    * @param qualifiers an {@link Iterable} representing {@link
    * Qualifier} instances the {@link Qualifiers} will contain; may be
    * {@code null}
