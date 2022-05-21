@@ -39,9 +39,6 @@ import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
  * A {@link Constable} pairing of a {@link Qualifiers} and an {@link
  * Object} that is qualified by them.
  *
- * @param <K> the type borne by the keys of the {@link Qualifiers} in
- * this {@link Qualified}
- *
  * @param <V> the type borne by the values of the {@link Qualifiers}
  * in this {@link Qualified}
  *
@@ -57,7 +54,7 @@ import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
  *
  * @see Constable
  */
-public interface Qualified<K extends Comparable<? super K>, V, T> extends Constable {
+public interface Qualified<V, T> extends Constable {
 
 
   /*
@@ -79,7 +76,7 @@ public interface Qualified<K extends Comparable<? super K>, V, T> extends Consta
    * @threadsafety Implementations of this method must be safe for
    * concurrent use by multiple threads.
    */
-  public Qualifiers<K, V> qualifiers();
+  public Qualifiers<V> qualifiers();
 
   /**
    * Returns this {@link Qualified}'s qualified object.
@@ -167,9 +164,6 @@ public interface Qualified<K extends Comparable<? super K>, V, T> extends Consta
    * Returns a {@link Qualified}, which may or may not be newly
    * created, representing the supplied qualified object.
    *
-   * @param <K> the type of the {@link Qualified}'s {@link
-   * Qualifiers}' {@linkplain Binding#attributes() attribute keys}
-   *
    * @param <V> the type of the {@link Qualified}'s {@link
    * Qualifiers}' {@linkplain Binding#value() value} and {@linkplain
    * Binding#attributes() attribute values}
@@ -189,7 +183,7 @@ public interface Qualified<K extends Comparable<? super K>, V, T> extends Consta
    *
    * @see #of(Qualifiers, Object)
    */
-  public static <K extends Comparable<? super K>, V, T> Qualified<K, V, T> of(final T qualified) {
+  public static <V, T> Qualified<V, T> of(final T qualified) {
     return Record.of(qualified);
   }
 
@@ -197,9 +191,6 @@ public interface Qualified<K extends Comparable<? super K>, V, T> extends Consta
    * Returns a {@link Qualified}, which may or may not be newly
    * created, representing the supplied {@link Qualifiers} and
    * qualified object.
-   *
-   * @param <K> the type of the {@link Qualified}'s {@link
-   * Qualifiers}' {@linkplain Binding#attributes() attribute keys}
    *
    * @param <V> the type of the {@link Qualified}'s {@link
    * Qualifiers}' {@linkplain Binding#value() value} and {@linkplain
@@ -221,7 +212,7 @@ public interface Qualified<K extends Comparable<? super K>, V, T> extends Consta
    * threads.
    */
   // Called by #describeConstable().
-  public static <K extends Comparable<? super K>, V, T> Qualified<K, V, T> of(final Qualifiers<K, V> qualifiers, final T qualified) {
+  public static <V, T> Qualified<V, T> of(final Qualifiers<V> qualifiers, final T qualified) {
     return Record.of(qualifiers, qualified);
   }
 
@@ -233,9 +224,6 @@ public interface Qualified<K extends Comparable<? super K>, V, T> extends Consta
 
   /**
    * A {@link Qualified} {@link java.lang.Record}.
-   *
-   * @param <K> the type borne by the keys of the {@link Qualifiers} in
-   * this {@link Qualified.Record}
    *
    * @param <V> the type borne by the values of the {@link Qualifiers}
    * in this {@link Qualified.Record}
@@ -255,8 +243,8 @@ public interface Qualified<K extends Comparable<? super K>, V, T> extends Consta
    * @author <a href="https://about.me/lairdnelson"
    * target="_parent">Laird Nelson</a>
    */
-  public static final record Record<K extends Comparable<? super K>, V, T>(Qualifiers<K, V> qualifiers, T qualified)
-    implements Qualified<K, V, T>, Constable {
+  public static final record Record<V, T>(Qualifiers<V> qualifiers, T qualified)
+    implements Qualified<V, T>, Constable {
 
 
     /*
@@ -341,9 +329,6 @@ public interface Qualified<K extends Comparable<? super K>, V, T> extends Consta
      * Returns a {@link Record}, which may or may not be newly
      * created, representing the qualified object.
      *
-     * @param <K> the type of the {@link Record}'s {@link Qualifiers}'
-     * {@linkplain Binding#attributes() attribute keys}
-     *
      * @param <V> the type of the {@link Record}'s {@link Qualifiers}'
      * {@linkplain Binding#value() value} and {@linkplain
      * Binding#attributes() attribute values}
@@ -363,17 +348,14 @@ public interface Qualified<K extends Comparable<? super K>, V, T> extends Consta
      *
      * @see #of(Qualifiers, Object)
      */
-    public static final <K extends Comparable<? super K>, V, T> Record<K, V, T> of(final T qualified) {
-      return of(Qualifiers.<K, V>of(), qualified);
+    public static final <V, T> Record<V, T> of(final T qualified) {
+      return of(Qualifiers.<V>of(), qualified);
     }
 
     /**
      * Returns a {@link Record}, which may or may not be newly
      * created, representing the supplied {@link Qualifiers} and
      * qualified object.
-     *
-     * @param <K> the type of the {@link Record}'s {@link Qualifiers}'
-     * {@linkplain Binding#attributes() attribute keys}
      *
      * @param <V> the type of the {@link Record}'s {@link Qualifiers}'
      * {@linkplain Binding#value() value} and {@linkplain
@@ -394,7 +376,7 @@ public interface Qualified<K extends Comparable<? super K>, V, T> extends Consta
      * @threadsafety This method is safe for concurrent use by multiple
      * threads.
      */
-    public static final <K extends Comparable<? super K>, V, T> Record<K, V, T> of(final Qualifiers<K, V> qualifiers, final T qualified) {
+    public static final <V, T> Record<V, T> of(final Qualifiers<V> qualifiers, final T qualified) {
       return new Record<>(qualifiers, qualified);
     }
 

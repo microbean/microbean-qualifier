@@ -48,9 +48,6 @@ import static org.microbean.qualifier.ConstantDescs.CD_Comparable;
  * An abstract {@linkplain #attributes() attributed} {@linkplain
  * #name() name}-{@linkplain #value() value} pair.
  *
- * @param <K> the type of a {@link Binding}'s {@linkplain
- * #attributes() attribute keys}
- *
  * @param <V> the type of a {@link Binding}'s {@linkplain #value()
  * value} and of its {@linkplain #attributes() attribute values}
  *
@@ -59,7 +56,7 @@ import static org.microbean.qualifier.ConstantDescs.CD_Comparable;
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  */
-public abstract class Binding<K extends Comparable<? super K>, V, B extends Binding<K, V, B>> implements Comparable<B>, Constable {
+public abstract class Binding<V, B extends Binding<V, B>> implements Comparable<B>, Constable {
 
 
   /*
@@ -71,9 +68,9 @@ public abstract class Binding<K extends Comparable<? super K>, V, B extends Bind
 
   private final V value;
 
-  private final SortedMap<K, V> attributes;
+  private final SortedMap<String, Object> attributes;
 
-  private final SortedMap<K, V> info;
+  private final SortedMap<String, Object> info;
 
 
   /*
@@ -106,8 +103,8 @@ public abstract class Binding<K extends Comparable<? super K>, V, B extends Bind
   @SuppressWarnings("unchecked")
   protected Binding(final String name,
                     final V value,
-                    final Map<? extends K, ? extends V> attributes,
-                    final Map<? extends K, ? extends V> info) {
+                    final Map<? extends String, ?> attributes,
+                    final Map<? extends String, ?> info) {
     super();
     this.name = Objects.requireNonNull(name);
     this.value = value;
@@ -119,8 +116,8 @@ public abstract class Binding<K extends Comparable<? super K>, V, B extends Bind
     if (info == null || info.isEmpty()) {
       this.info = emptySortedMap();
     } else {
-      final TreeMap<K, V> map = new TreeMap<>();
-      for (final K key : info.keySet()) {
+      final TreeMap<String, Object> map = new TreeMap<>();
+      for (final String key : info.keySet()) {
         if (!this.attributes.containsKey(key)) {
           map.put(key, info.get(key));
         }
@@ -184,7 +181,7 @@ public abstract class Binding<K extends Comparable<? super K>, V, B extends Bind
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public final SortedMap<K, V> attributes() {
+  public final SortedMap<String, Object> attributes() {
     return this.attributes;
   }
 
@@ -205,7 +202,7 @@ public abstract class Binding<K extends Comparable<? super K>, V, B extends Bind
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    */
-  public final SortedMap<K, V> info() {
+  public final SortedMap<String, Object> info() {
     return this.info;
   }
 
@@ -379,8 +376,8 @@ public abstract class Binding<K extends Comparable<? super K>, V, B extends Bind
     } else {
       int cmp = this.name().compareTo(other.name());
       if (cmp == 0) {
-        V myValue = this.value();
-        V otherValue = other.value();
+        Object myValue = this.value();
+        Object otherValue = other.value();
         if (value == null) {
           if (otherValue == null) {
             cmp = 0;
@@ -390,22 +387,22 @@ public abstract class Binding<K extends Comparable<? super K>, V, B extends Bind
           cmp = -1;
         } else if (myValue instanceof Comparable) {
           try {
-            cmp = ((Comparable<V>)myValue).compareTo(otherValue);
+            cmp = ((Comparable<Object>)myValue).compareTo(otherValue);
           } catch (final ClassCastException ohWell) {
           }
         }
         if (cmp == 0) {
           cmp = String.valueOf(this.value()).compareTo(String.valueOf(other.value())); // NOTE
           if (cmp == 0) {
-            final SortedMap<K, V> myAttributes = this.attributes();
-            final SortedMap<K, V> otherAttributes = other.attributes();
+            final SortedMap<String, Object> myAttributes = this.attributes();
+            final SortedMap<String, Object> otherAttributes = other.attributes();
             cmp = Integer.compare(myAttributes.size(), otherAttributes.size());
             if (cmp == 0) {
-              final Iterator<Entry<K, V>> myEntries = myAttributes.entrySet().iterator();
-              final Iterator<Entry<K, V>> otherEntries = otherAttributes.entrySet().iterator();
+              final Iterator<Entry<String, Object>> myEntries = myAttributes.entrySet().iterator();
+              final Iterator<Entry<String, Object>> otherEntries = otherAttributes.entrySet().iterator();
               while (myEntries.hasNext()) {
-                final Entry<K, V> myEntry = myEntries.next();
-                final Entry<K, V> otherEntry = otherEntries.next();
+                final Entry<String, ?> myEntry = myEntries.next();
+                final Entry<String, ?> otherEntry = otherEntries.next();
                 cmp = myEntry.getKey().compareTo(otherEntry.getKey());
                 if (cmp == 0) {
                   myValue = myEntry.getValue();
@@ -419,7 +416,7 @@ public abstract class Binding<K extends Comparable<? super K>, V, B extends Bind
                     cmp = -1;
                   } else if (myValue instanceof Comparable) {
                     try {
-                      cmp = ((Comparable<V>)myValue).compareTo(otherValue);
+                      cmp = ((Comparable<Object>)myValue).compareTo(otherValue);
                     } catch (final ClassCastException ohWell) {
                     }
                   }
@@ -492,7 +489,7 @@ public abstract class Binding<K extends Comparable<? super K>, V, B extends Bind
     if (this == other) {
       return true;
     } else if (other != null && other.getClass() == this.getClass()) {
-      final Binding<?, ?, ?> her = (Binding<?, ?, ?>)other;
+      final Binding<?, ?> her = (Binding<?, ?>)other;
       return
         Objects.equals(this.name(), her.name()) &&
         Objects.equals(this.value(), her.value()) &&
