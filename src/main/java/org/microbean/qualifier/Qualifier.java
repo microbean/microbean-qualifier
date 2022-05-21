@@ -49,12 +49,48 @@ import static org.microbean.qualifier.ConstantDescs.CD_Qualifier;
  */
 public final class Qualifier<K extends Comparable<? super K>, V> extends Binding<K, V, Qualifier<K, V>> {
 
+
+  /*
+   * Constructors.
+   */
+
+
+  /**
+   * Creates a new {@link Qualifier}.
+   *
+   * @param name the name; must not be {@code null}
+   *
+   * @param value the value; may be {@code null}
+   *
+   * @param attributes further describing this {@link Qualifier}; may
+   * be {@code null}
+   *
+   * @param info informational attributes further describing this
+   * {@link Qualifier} that are not considered by its {@link
+   * #equals(Object)} implementation; may be {@code null}
+   *
+   * @see #name()
+   *
+   * @see #value()
+   *
+   * @see #attributes()
+   *
+   * @see #info()
+   *
+   * @see Binding#Binding(String, Object, Map, Map)
+   */
   private Qualifier(final String name,
                     final V value,
                     final Map<? extends K, ? extends V> attributes,
                     final Map<? extends K, ? extends V> info) {
     super(name, value, attributes, info);
   }
+
+
+  /*
+   * Instance methods.
+   */
+
 
   /**
    * Returns a {@link MethodHandleDesc} describing the constructor or
@@ -84,6 +120,12 @@ public final class Qualifier<K extends Comparable<? super K>, V> extends Binding
                                 "of",
                                 MethodTypeDesc.of(CD_Qualifier, CD_String, CD_Object, CD_Map, CD_Map));
   }
+
+
+  /*
+   * Static methods.
+   */
+
 
   /**
    * Returns a {@link Qualifier}, which may or may not be newly

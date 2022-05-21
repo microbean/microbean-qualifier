@@ -19,6 +19,7 @@ package org.microbean.qualifier;
 import java.lang.constant.MethodHandleDesc;
 import java.lang.constant.MethodTypeDesc;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -324,6 +325,39 @@ public final class Qualifiers<K extends Comparable<? super K>, V> extends Bindin
    * @param <V> the type of the {@link Qualifier}'s {@linkplain
    * Qualifier#attributes() attribute values}
    *
+   * @param qualifier0 the first {@link Qualifier} the {@link
+   * Qualifiers} will contain; must not be {@code null}
+   *
+   * @param qualifier1 the second {@link Qualifier} the {@link
+   * Qualifiers} will contain; must not be {@code null}
+   *
+   * @return a {@link Qualifiers}
+   *
+   * @exception NullPointerException if {@code qualifier} is {@code
+   * null}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  public static final <K extends Comparable<? super K>, V> Qualifiers<K, V> of(final Qualifier<K, V> qualifier0,
+                                                                               final Qualifier<K, V> qualifier1) {
+    return of(List.of(qualifier0, qualifier1));
+  }
+
+  /**
+   * Returns a {@link Qualifiers}, which may or may not be newly
+   * created, representing the supplied arguments.
+   *
+   * @param <K> the type of the {@link Qualifier}'s {@linkplain
+   * Qualifier#attributes() attribute keys}
+   *
+   * @param <V> the type of the {@link Qualifier}'s {@linkplain
+   * Qualifier#attributes() attribute values}
+   *
    * @param qualifiers an {@link Iterable} representing {@link
    * Qualifier} instances the {@link Qualifiers} will contain; may be
    * {@code null}
@@ -347,6 +381,43 @@ public final class Qualifiers<K extends Comparable<? super K>, V> extends Bindin
       newQualifiers.add(i.next());
       while (i.hasNext()) {
         newQualifiers.add(i.next());
+      }
+      return new Qualifiers<>(newQualifiers);
+    }
+    return of();
+  }
+
+  /**
+   * Returns a {@link Qualifiers}, which may or may not be newly
+   * created, representing the supplied arguments.
+   *
+   * @param <K> the type of the {@link Qualifier}'s {@linkplain
+   * Qualifier#attributes() attribute keys}
+   *
+   * @param qualifiers an {@link Iterable} representing {@link
+   * Qualifier} instances the {@link Qualifiers} will contain; may be
+   * {@code null}
+   *
+   * @return a {@link Qualifiers}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  @SuppressWarnings("unchecked")
+  public static final <K extends Comparable<? super K>> Qualifiers<?, ?> ofDisparate(final Iterable<? extends Qualifier<?, ?>> qualifiers) {
+    if (qualifiers == null) {
+      return of();
+    }
+    final Iterator<? extends Qualifier<?, ?>> i = qualifiers.iterator();
+    if (i.hasNext()) {
+      final Collection<Qualifier<K, Object>> newQualifiers = new TreeSet<>();
+      newQualifiers.add((Qualifier<K, Object>)i.next());
+      while (i.hasNext()) {
+        newQualifiers.add((Qualifier<K, Object>)i.next());
       }
       return new Qualifiers<>(newQualifiers);
     }
