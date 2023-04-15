@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2022 microBean™.
+ * Copyright © 2022–2023 microBean™.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@
 module org.microbean.qualifier {
 
   requires org.microbean.constant;
-  requires transitive org.microbean.development.annotation;
-  requires org.microbean.invoke; // actually only needed at runtime, but the module system doesn't let us say this
-  
+
+  // requires org.microbean.invoke; // actually only needed at runtime, but the module system doesn't let us say this
+
   exports org.microbean.qualifier;
-  
+
 }

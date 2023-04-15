@@ -33,6 +33,8 @@ public final class ConstantDescs {
    */
 
 
+  public static final ClassDesc CD_Attribute = ClassDesc.of("org.microbean.qualifier.Attribute");
+  
   /**
    * A {@link ClassDesc} describing {@link Binding
    * org.microbean.qualifier.Binding}.
@@ -53,6 +55,8 @@ public final class ConstantDescs {
 
   static final ClassDesc CD_Iterable = ClassDesc.of("java.lang.Iterable");
 
+  public static final ClassDesc CD_NamedAttributeSet = ClassDesc.of("org.microbean.qualifier.NamedAttributeSet");
+  
   /**
    * A {@link ClassDesc} describing {@link Qualified
    * org.microbean.qualifier.Qualified}.
