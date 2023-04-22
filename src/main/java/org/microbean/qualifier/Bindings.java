@@ -44,7 +44,7 @@ import static java.lang.constant.ConstantDescs.CD_Collection;
 import static java.util.Collections.emptySortedSet;
 import static java.util.Collections.unmodifiableSortedSet;
 
-import static org.microbean.qualifier.ConstantDescs.CD_Iterable;
+import static org.microbean.constant.ConstantDescs.CD_Iterable;
 
 /**
  * An abstract, immutable {@linkplain Iterable iterable} collection of

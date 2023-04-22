@@ -32,7 +32,8 @@ import static java.lang.constant.ConstantDescs.CD_Collection;
 
 import static java.lang.constant.DirectMethodHandleDesc.Kind.STATIC;
 
-import static org.microbean.qualifier.ConstantDescs.CD_Iterable;
+import static org.microbean.constant.ConstantDescs.CD_Iterable;
+
 import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
 
 /**
