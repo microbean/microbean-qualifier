@@ -43,31 +43,25 @@ final class TestConstableSemantics {
     final Qualifiers<String> q =
       Qualifiers.of(List.of(Qualifier.<String>of("a", "b"),
                             Qualifier.<String>of("c", "d")));
-    assertEquals(q, q.describeConstable().orElseThrow().resolveConstantDesc(MethodHandles.lookup()));
+    assertEquals(q, q.describeConstable().orElseThrow(AssertionError::new).resolveConstantDesc(MethodHandles.lookup()));
   }
 
   @Test
   final void testQualifierDescribeConstable() throws ReflectiveOperationException {
     final Qualifier<String> q = Qualifier.of("a", null, Map.of("c", "d"));
-    assertEquals(q, q.describeConstable().orElseThrow().resolveConstantDesc(MethodHandles.publicLookup().in(Qualifier.class)));
+    assertEquals(q, q.describeConstable().orElseThrow(AssertionError::new).resolveConstantDesc(MethodHandles.publicLookup().in(Qualifier.class)));
   }
 
   @Test
   final void testQualifiersDescribeConstable() throws ReflectiveOperationException {
     final Qualifiers<String> q2 = Qualifiers.of(Qualifier.of("a", "b", Map.of("c", "d")));
-    assertEquals(q2, q2.describeConstable().orElseThrow().resolveConstantDesc(MethodHandles.publicLookup().in(Qualifiers.class)));
+    assertEquals(q2, q2.describeConstable().orElseThrow(AssertionError::new).resolveConstantDesc(MethodHandles.publicLookup().in(Qualifiers.class)));
   }
 
   @Test
-  final void testAttributeDescribeConstable() throws ReflectiveOperationException {
-    final Attribute<String> a = new Attribute<>("a", "b");
-    assertEquals(a, a.describeConstable().orElseThrow().resolveConstantDesc(MethodHandles.publicLookup().in(Attribute.class)));
+  final void testNamedAttributeMapDescribeConstable() throws ReflectiveOperationException {
+    final NamedAttributeMap<String> a = new NamedAttributeMap<>("crap", Map.of("a", "b"));
+    assertEquals(a, a.describeConstable().orElseThrow(AssertionError::new).resolveConstantDesc(MethodHandles.publicLookup().in(NamedAttributeMap.class)));
   }
-
-  @Test
-  final void testNamedAttributeSetDescribeConstable() throws ReflectiveOperationException {
-    final NamedAttributeSet<String> a = new NamedAttributeSet<>(NamedAttributeSet.Kind.QUALIFIERS, "crap", "a", "b");
-    assertEquals(a, a.describeConstable().orElseThrow().resolveConstantDesc(MethodHandles.publicLookup().in(NamedAttributeSet.class)));
-  }
-
+  
 }

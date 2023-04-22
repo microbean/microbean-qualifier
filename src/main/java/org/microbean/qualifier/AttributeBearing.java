@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2022–2023 microBean™.
+ * Copyright © 2023 microBean™.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
@@ -11,21 +11,24 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+package org.microbean.qualifier;
+
+import java.util.Collection;
 
 /**
- * Provides packages related to <em>qualifiers</em>, key-value pairs that help describe the features of something.
+ * An interface whose implementations have affiliated {@link NamedAttributeMap} instances.
  *
  * @author <a href="https://about.me/lairdnelson" target="_parent">Laird Nelson</a>
- *
- * @see org.microbean.qualifier.Qualifiers
- *
- * @see org.microbean.qualifier.Qualified
  */
-module org.microbean.qualifier {
+public interface AttributeBearing<V> {
 
-  requires org.microbean.constant;
-  requires transitive org.microbean.invoke;
-
-  exports org.microbean.qualifier;
+  /**
+   * Returns the affiliated {@link NamedAttributeMap} instances.
+   *
+   * <p>Implementations of this method must not return {@code null}.
+   *
+   * @return the affiliated {@link NamedAttributeMap} instances; never {@code null}
+   */
+  public Collection<NamedAttributeMap<V>> attributes();
 
 }

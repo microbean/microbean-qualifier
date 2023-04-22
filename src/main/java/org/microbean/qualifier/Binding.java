@@ -39,7 +39,7 @@ import static java.lang.constant.ConstantDescs.NULL;
 import static java.util.Collections.emptySortedMap;
 import static java.util.Collections.unmodifiableSortedMap;
 
-import static org.microbean.qualifier.ConstantDescs.CD_Comparable;
+import static org.microbean.constant.ConstantDescs.CD_Comparable;
 
 /**
  * An abstract {@linkplain #attributes() attributed} {@linkplain #name() name}-{@linkplain #value() value} pair.
