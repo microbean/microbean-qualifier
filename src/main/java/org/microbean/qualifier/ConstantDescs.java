@@ -29,13 +29,6 @@ public final class ConstantDescs {
 
 
   /**
-   * A {@link ClassDesc} describing {@link Bindings org.microbean.qualifier.Attribute}.
-   *
-   * @nullability This field is never {@code null}.
-   */
-  public static final ClassDesc CD_Attribute = ClassDesc.of("org.microbean.qualifier.Attribute");
-
-  /**
    * A {@link ClassDesc} describing {@link Bindings org.microbean.qualifier.Attributed}.
    *
    * @nullability This field is never {@code null}.
