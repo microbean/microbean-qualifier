@@ -13,12 +13,13 @@
  */
 package org.microbean.qualifier;
 
+import java.lang.System.Logger;
+
 import java.lang.constant.ClassDesc;
 import java.lang.constant.Constable;
 import java.lang.constant.ConstantDesc;
 import java.lang.constant.DynamicConstantDesc;
 import java.lang.constant.MethodHandleDesc;
-import java.lang.constant.MethodTypeDesc;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -30,6 +31,8 @@ import java.util.TreeMap;
 
 import org.microbean.constant.Constables;
 
+import static java.lang.System.Logger.Level.WARNING;
+
 import static java.lang.constant.ConstantDescs.BSM_INVOKE;
 import static java.lang.constant.ConstantDescs.CD_Map;
 import static java.lang.constant.ConstantDescs.CD_Object;
@@ -38,8 +41,6 @@ import static java.lang.constant.ConstantDescs.NULL;
 
 import static java.util.Collections.emptySortedMap;
 import static java.util.Collections.unmodifiableSortedMap;
-
-import static org.microbean.constant.ConstantDescs.CD_Comparable;
 
 /**
  * An abstract {@linkplain #attributes() attributed} {@linkplain #name() name}-{@linkplain #value() value} pair.
@@ -52,6 +53,14 @@ import static org.microbean.constant.ConstantDescs.CD_Comparable;
  * @author <a href="https://about.me/lairdnelson" target="_parent">Laird Nelson</a>
  */
 public abstract class Binding<V, B extends Binding<V, B>> implements Comparable<B>, Constable {
+
+
+  /*
+   * Static fields.
+   */
+
+
+  private static final Logger LOGGER = System.getLogger(Binding.class.getName());
 
 
   /*
@@ -351,6 +360,9 @@ public abstract class Binding<V, B extends Binding<V, B>> implements Comparable<
         try {
           cmp = ((Comparable<Object>)myValue).compareTo(otherValue);
         } catch (final ClassCastException ohWell) {
+          if (LOGGER.isLoggable(WARNING)) {
+            LOGGER.log(WARNING, ohWell);
+          }
         }
       }
       if (cmp != 0) {
@@ -368,7 +380,7 @@ public abstract class Binding<V, B extends Binding<V, B>> implements Comparable<
       if (cmp != 0) {
         return cmp;
       }
-      
+
       final Iterator<Entry<String, Object>> myEntries = myAttributes.entrySet().iterator();
       final Iterator<Entry<String, Object>> otherEntries = otherAttributes.entrySet().iterator();
       while (myEntries.hasNext()) {
@@ -391,6 +403,9 @@ public abstract class Binding<V, B extends Binding<V, B>> implements Comparable<
           try {
             cmp = ((Comparable<Object>)myValue).compareTo(otherValue);
           } catch (final ClassCastException ohWell) {
+            if (LOGGER.isLoggable(WARNING)) {
+              LOGGER.log(WARNING, ohWell);
+            }
           }
         }
         if (cmp != 0) {

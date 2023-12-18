@@ -15,10 +15,7 @@ package org.microbean.qualifier;
 
 import java.lang.System.Logger;
 
-import java.lang.constant.ClassDesc;
 import java.lang.constant.Constable;
-import java.lang.constant.ConstantDesc;
-import java.lang.constant.DirectMethodHandleDesc;
 import java.lang.constant.DynamicConstantDesc;
 import java.lang.constant.MethodHandleDesc;
 import java.lang.constant.MethodTypeDesc;
@@ -40,11 +37,11 @@ import org.microbean.constant.Constables;
 import org.microbean.invoke.ContentHashable;
 
 import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.WARNING;
 
 import static java.lang.constant.ConstantDescs.BSM_INVOKE;
 import static java.lang.constant.ConstantDescs.CD_Collection;
 import static java.lang.constant.ConstantDescs.CD_Map;
-import static java.lang.constant.ConstantDescs.CD_Set;
 import static java.lang.constant.ConstantDescs.CD_String;
 import static java.lang.constant.DirectMethodHandleDesc.Kind.STATIC;
 
@@ -76,36 +73,30 @@ public record NamedAttributeMap<V>(String name,
     if (attributes.isEmpty()) {
       attributes = Collections.emptySortedMap();
     } else {
-      SortedMap<String, V> m;
-      if (attributes instanceof TreeMap<String, V> cloneMe) {
-        m = (SortedMap<String, V>)cloneMe.clone();
-      } else {
-        m = new TreeMap<>(attributes instanceof SortedMap<String, V> sm ? sm.comparator() : null);
-        m.putAll(attributes);
-      }
+      final SortedMap<String, V> m =
+        attributes instanceof TreeMap<String, V> cloneMe ?
+        (SortedMap<String, V>)cloneMe.clone() :
+        new TreeMap<>(attributes instanceof SortedMap<String, V> sm ? sm.comparator() : null);
+      m.putAll(attributes);
       attributes = Collections.unmodifiableSortedMap(m);
     }
     if (info.isEmpty()) {
       info = Collections.emptySortedMap();
     } else {
-      SortedMap<String, V> m;
-      if (info instanceof TreeMap<String, V> cloneMe) {
-        m = (TreeMap<String, V>)cloneMe.clone();
-      } else {
-        m = new TreeMap<>(info instanceof SortedMap<String, V> sm ? sm.comparator() : null);
-        m.putAll(info);
-      }
+      final SortedMap<String, V> m =
+        info instanceof TreeMap<String, V> cloneMe ?
+        (TreeMap<String, V>)cloneMe.clone() :
+        new TreeMap<>(info instanceof SortedMap<String, V> sm ? sm.comparator() : null);
+      m.putAll(info);
       info = Collections.unmodifiableSortedMap(m);
     }
     if (metadata.isEmpty()) {
       metadata = List.of();
     } else {
-      List<NamedAttributeMap<V>> l;
-      if (metadata instanceof ArrayList<NamedAttributeMap<V>> cloneMe) {
-        l = (List<NamedAttributeMap<V>>)cloneMe.clone();
-      } else {
-        l = new ArrayList<>(metadata);
-      }
+      final List<NamedAttributeMap<V>> l =
+        metadata instanceof ArrayList<NamedAttributeMap<V>> cloneMe ?
+        (List<NamedAttributeMap<V>>)cloneMe.clone() :
+        new ArrayList<>(metadata);
       Collections.sort(l);
       metadata = Collections.unmodifiableList(l);
     }
@@ -118,7 +109,7 @@ public record NamedAttributeMap<V>(String name,
   public final boolean containsKey(final String k) {
     return this.attributes().containsKey(k);
   }
-  
+
   public final V get(final String k) {
     return this.attributes().get(k);
   }
@@ -141,7 +132,7 @@ public record NamedAttributeMap<V>(String name,
     }
     return Optional.of(sb.toString());
   }
-  
+
   // Consistent with equals().
   @Override // Comparable
   @SuppressWarnings("unchecked")
@@ -159,8 +150,8 @@ public record NamedAttributeMap<V>(String name,
     if (cmp != 0) {
       return cmp;
     }
-    Iterator<Entry<String, V>> myIterator = attributes.entrySet().iterator();
-    Iterator<Entry<String, V>> herIterator = herAttributes.entrySet().iterator();
+    final Iterator<Entry<String, V>> myIterator = attributes.entrySet().iterator();
+    final Iterator<Entry<String, V>> herIterator = herAttributes.entrySet().iterator();
     while (myIterator.hasNext()) {
       final Entry<String, V> myEntry = myIterator.next();
       final Entry<String, V> herEntry = herIterator.next();
@@ -189,6 +180,9 @@ public record NamedAttributeMap<V>(String name,
         try {
           cmp = ((Comparable<V>)myValue).compareTo(herValue);
         } catch (final ClassCastException ohWell) {
+          if (LOGGER.isLoggable(WARNING)) {
+            LOGGER.log(WARNING, ohWell);
+          }
         }
       } else if (!myValue.equals(herValue)) {
         if (LOGGER.isLoggable(DEBUG)) {

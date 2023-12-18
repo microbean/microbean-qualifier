@@ -14,9 +14,7 @@
 package org.microbean.qualifier;
 
 import java.lang.constant.Constable;
-import java.lang.constant.ConstantDesc;
 import java.lang.constant.DynamicConstantDesc;
-import java.lang.constant.DirectMethodHandleDesc;
 import java.lang.constant.MethodHandleDesc;
 import java.lang.constant.MethodTypeDesc;
 
@@ -46,12 +44,10 @@ public record Attributed<T, V>(Collection<NamedAttributeMap<V>> attributes, T at
     if (attributes.isEmpty()) {
       attributes = List.of();
     } else {
-      List<NamedAttributeMap<V>> l;
-      if (attributes instanceof ArrayList<NamedAttributeMap<V>> cloneMe) {
-        l = (List<NamedAttributeMap<V>>)cloneMe.clone();
-      } else {
-        l = new ArrayList<>(attributes);
-      }
+      final List<NamedAttributeMap<V>> l =
+        attributes instanceof ArrayList<NamedAttributeMap<V>> cloneMe ?
+        (List<NamedAttributeMap<V>>)cloneMe.clone() :
+        new ArrayList<>(attributes);
       Collections.sort(l);
       attributes = Collections.unmodifiableList(l);
     }
@@ -74,7 +70,7 @@ public record Attributed<T, V>(Collection<NamedAttributeMap<V>> attributes, T at
     }
     return Optional.of(sb.toString());
   }
-  
+
   @Override // Constable
   public final Optional<DynamicConstantDesc<Attributed<T, V>>> describeConstable() {
     return Constables.describeConstable(this.attributed())
@@ -94,5 +90,5 @@ public record Attributed<T, V>(Collection<NamedAttributeMap<V>> attributes, T at
   public static final <T, V> Attributed<T, V> of(final Collection<NamedAttributeMap<V>> attributes, final T attributed) {
     return new Attributed<>(attributes, attributed);
   }
-  
+
 }
