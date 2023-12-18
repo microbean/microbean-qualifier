@@ -32,7 +32,6 @@ import static java.lang.constant.ConstantDescs.NULL;
 import static java.lang.constant.DirectMethodHandleDesc.Kind.INTERFACE_STATIC;
 
 import static org.microbean.qualifier.ConstantDescs.CD_Qualified;
-import static org.microbean.qualifier.ConstantDescs.CD_QualifiedRecord;
 import static org.microbean.qualifier.ConstantDescs.CD_Qualifiers;
 
 /**

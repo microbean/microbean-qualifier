@@ -19,7 +19,6 @@ package org.microbean.qualifier;
 import java.lang.constant.MethodHandleDesc;
 import java.lang.constant.MethodTypeDesc;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -27,8 +26,6 @@ import java.util.Objects;
 import java.util.TreeSet;
 
 import java.util.function.Function;
-
-import static java.lang.constant.ConstantDescs.CD_Collection;
 
 import static java.lang.constant.DirectMethodHandleDesc.Kind.STATIC;
 
